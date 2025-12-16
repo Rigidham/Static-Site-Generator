@@ -1,0 +1,162 @@
+{
+  "banner": {
+    "label": "Banner",
+    "variants": {
+      "dark-and-full-width": {
+        "label": "Dark & Full Width",
+        "description": "Full-width announcement bar with dismiss CTA",
+        "file": "banner/dark-and-full-width.ts"
+      }
+    }
+  },
+  "blog": {
+    "label": "Blog",
+    "variants": {
+      "highlighted-articles": {
+        "label": "Highlighted Articles",
+        "description": "Three-card editorial grid",
+        "file": "blog/highlighted-articles.ts"
+      }
+    }
+  },
+  "contact-us": {
+    "label": "Contact Us",
+    "variants": {
+      "two-column": {
+        "label": "Two Column",
+        "description": "Details with contact form",
+        "file": "contact-us/two-column.ts"
+      }
+    }
+  },
+  "content": {
+    "label": "Content",
+    "variants": {
+      "simple-centered": {
+        "label": "Simple Centered",
+        "description": "Centered copy with supporting text",
+        "file": "content/simple-centered.ts"
+      }
+    }
+  },
+  "cta": {
+    "label": "CTA",
+    "variants": {
+      "primary": {
+        "label": "Primary",
+        "description": "Bold CTA banner",
+        "file": "cta/primary.ts"
+      }
+    }
+  },
+  "faq": {
+    "label": "FAQ",
+    "variants": {
+      "accordion": {
+        "label": "Accordion",
+        "description": "Three question accordion",
+        "file": "faq/accordion.ts"
+      }
+    }
+  },
+  "feature": {
+    "label": "Feature",
+    "variants": {
+      "icons-grid": {
+        "label": "Icons Grid",
+        "description": "4-up icon grid",
+        "file": "feature/icons-grid.ts"
+      }
+    }
+  },
+  "footer": {
+    "label": "Footer",
+    "variants": {
+      "simple-columns": {
+        "label": "Simple Columns",
+        "description": "Four-column footer with signup",
+        "file": "footer/simple-columns.ts"
+      }
+    }
+  },
+  "hero": {
+    "label": "Hero",
+    "variants": {
+      "split": {
+        "label": "Split",
+        "description": "Two-column hero with media",
+        "file": "hero/split.ts"
+      }
+    }
+  },
+  "logo-cloud": {
+    "label": "Logo Cloud",
+    "variants": {
+      "minimal": {
+        "label": "Minimal",
+        "description": "Simple text-based logo row",
+        "file": "logo-cloud/minimal.ts"
+      }
+    }
+  },
+  "navbar": {
+    "label": "Navbar",
+    "variants": {
+      "stacked": {
+        "label": "Stacked",
+        "description": "Stacked nav summary",
+        "file": "navbar/stacked.ts"
+      }
+    }
+  },
+  "newsletter": {
+    "label": "Newsletter",
+    "variants": {
+      "card": {
+        "label": "Card",
+        "description": "Carded subscribe form",
+        "file": "newsletter/card.ts"
+      }
+    }
+  },
+  "pricing": {
+    "label": "Pricing",
+    "variants": {
+      "tiers": {
+        "label": "Tiers",
+        "description": "Two-plan pricing",
+        "file": "pricing/tiers.ts"
+      }
+    }
+  },
+  "stats": {
+    "label": "Stats",
+    "variants": {
+      "three-column": {
+        "label": "3 Column",
+        "description": "Three stat callouts",
+        "file": "stats/three-column.ts"
+      }
+    }
+  },
+  "team": {
+    "label": "Team",
+    "variants": {
+      "grid": {
+        "label": "Grid",
+        "description": "Two-column team grid",
+        "file": "team/grid.ts"
+      }
+    }
+  },
+  "testimonial": {
+    "label": "Testimonial",
+    "variants": {
+      "quote-card": {
+        "label": "Quote Card",
+        "description": "Single highlighted quote",
+        "file": "testimonial/quote-card.ts"
+      }
+    }
+  }
+}
