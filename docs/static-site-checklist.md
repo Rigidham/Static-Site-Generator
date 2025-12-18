@@ -82,6 +82,13 @@ Optional flags (canonical):
   - `--firebase`
   - `--ui-components "global:footer=simple-columns;home:hero=split,cta=primary"`
     - Scope templates globally or per page; selections must map to keys inside `templates/ui-components/manifest.json`
+  - Color overrides for PrimeNG styled mode:
+    - `--color-primary "#39FF14"` (default)
+    - `--color-secondary "#FF3CAC"` (default)
+    - `--color-background "#0B0B0B"` (default)  
+      Example: `--color-primary "#0ea5e9" --color-secondary "#fbbf24" --color-background "#020617"`
+    - `--color-mode "light"` (default) or `"dark"` to declare the intended color scheme.
+    - Values must be valid hex (`#RGB` or `#RRGGBB`). Bootstrap always writes `src/styles/primeng-tokens.css` with a full Prime token scale (`--p-primary-50…950`, `--p-secondary-*`, hover/active/contrast tokens, surface overrides, etc.) and wires it after `src/prime-theme.css`. Override the defaults via flags when needed.
 
 ### 3.2 Canonical directory rules (hard rule)
 - **Do not create anything in `src/app/app/**`**
@@ -106,6 +113,7 @@ Optional flags (canonical):
   2. Updating the manifest entry (label, description, file path)
   3. Updating the README + this checklist so the catalog remains documented
 - Do not ship unregistered templates; the manifest is authoritative.
+- If template selections exist but `UI_TEMPLATE_LIBRARY_ROOT` or `manifest.json` is missing, the injector must exit non-zero (no silent skips). Every run also emits a summary of skipped components/variants so issues can be corrected immediately.
 
 ---
 
@@ -128,6 +136,16 @@ If animations are used or expected by UI components:
 
 **Do not** import PrimeNG base CSS via `@import 'primeng/resources/primeng.min.css'`  
 (PrimeNG package exports can block direct file imports.)
+
+### 4.3 PrimeNG styled token overrides (required)
+- Bootstrap defaults to the studio palette (`#39FF14` primary, `#FF3CAC` secondary, `#0B0B0B` background) and always emits `src/styles/primeng-tokens.css` using those values unless overridden.
+- Any `--color-*` flags must:
+  - Validate the values are `#RGB` or `#RRGGBB` (fail immediately if not).
+  - Regenerate a full Prime-style token scale (`--p-*-50…950`, hover/active/contrast, and surface tokens) so page-level CSS that references `--p-primary-600`, etc., picks up the new palette.
+  - Register the stylesheet in `angular.json` *after* `src/prime-theme.css` (both build + test targets).
+  - Update `app.config.ts` to pass the same palette (primary + surface tokens) into `providePrimeNG({ theme: { preset: … } })` so Prime’s semantic theme preset mirrors the CSS token overrides (light + dark color schemes).
+  - Apply the requested `--color-mode` to `:root`/`:host` via `color-scheme: light|dark` so browsers and Prime templates render with the correct base tone.
+- The file should not be referenced if it does not exist, and the injector should only add it once (no duplicates).
 
 ---
 
@@ -152,6 +170,7 @@ If animations are used or expected by UI components:
   - `src/app/pages/<slug>/<slug>.component.ts`
   - `src/app/pages/<slug>/<slug>.component.html`
   - `src/app/pages/<slug>/<slug>.component.css`
+- Bootstrap must strip the Angular CLI default `<p>___ works!</p>` stub and leave the canonical shell comment (`<!-- Add page content -->`) so no placeholder text ships to clients.
 
 ### 6.2 Per-page components
 If specified via `--components`, create unique components per page, e.g.:
@@ -223,7 +242,8 @@ Every site must ship with:
 - Contact CTA (button + form or mailto/phone)
 - Meta title + description
 - Open Graph basics (title/description/image if available)
-- Sitemap + robots (when applicable)
+- Sitemap + robots (update `src/sitemap.xml` + `src/robots.txt` with the production domain or set `SEO_BASE_URL` before bootstrap)
+- Page-level SEO services (`src/app/pages/<slug>/<slug>-seo.service.ts`) updated with final Title/Meta copy
 
 ---
 
@@ -291,6 +311,7 @@ Every site must ship with:
 - [ ] `public/` contains built output after build:static
 - [ ] Routes all work (direct navigation + refresh)
 - [ ] `node scripts/inject-ui-templates.mjs` (with `UI_TEMPLATE_LIBRARY_ROOT` set) completes without warnings and re-applies the selected templates
+- [ ] Each page’s SeoService (`src/app/pages/<slug>/<slug>-seo.service.ts`) sets the final title + meta description
 
 ---
 

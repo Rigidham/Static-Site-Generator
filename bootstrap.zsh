@@ -11,23 +11,52 @@ CUSTOMERS_DIR="${SCRIPT_ROOT}/customers"
 usage() {
   cat <<'TXT'
 Usage:
-  bootstrap.zsh <app-name> [--pages "about,services"] [--components "home:hero;about:hero"] [--global-components "footer,chat-box"] [--global-components-top "promo-banner"] [--global-components-before-outlet "breadcrumbs"] [--global-components-after-outlet "chat-box"] [--global-components-bottom "footer"] [--style-url "https://example.com"] [--firebase]
+  bootstrap.zsh <app-name> [--pages "about,services"] [--components "home:hero;about:hero"] [--global-components "footer,chat-box"] [--global-components-top "promo-banner"] [--global-components-before-outlet "breadcrumbs"] [--global-components-after-outlet "chat-box"] [--global-components-bottom "footer"] [--seo-base-url "https://example.com"] [--style-url "https://example.com"] [--color-primary "#39FF14"] [--color-secondary "#FF3CAC"] [--color-background "#0B0B0B"] [--firebase]
 
 Examples:
   ./bootstrap.zsh acme-plumbing
   ./bootstrap.zsh acme-plumbing --pages "About, Services, Contact Us, FAQ"
   ./bootstrap.zsh acme-plumbing --style-url "https://example.com"
   ./bootstrap.zsh acme-plumbing --style-url "https://example.com" --firebase
+  ./bootstrap.zsh acme-plumbing --color-primary "#0ea5e9" --color-background "#020617"
   ./bootstrap.zsh acme-plumbing --firebase
 
 Notes:
   - Home is ALWAYS included.
   - Pages can be ANY labels you type (spaces/caps/punctuation ok). They are auto-converted to URL slugs.
+  - Use --seo-base-url to set sitemap/robots + default metadata base URL (defaults to https://example.com).
   - If --pages is omitted, you'll be prompted (press Enter for default: About,Services,Gallery,Contact)
 TXT
 }
 
 die() { echo "ERROR: $*" >&2; usage; exit 1; }
+
+normalize_hex_color_or_die() {
+  local value="$1"
+  local label="$2"
+  [[ -z "$value" ]] && { print -r -- ""; return 0; }
+
+  local hex="$value"
+  if [[ "$hex" != \#* ]]; then
+    hex="#$hex"
+  fi
+
+  local digits="${hex:1}"
+  digits="${digits:l}"
+
+  if [[ "$digits" =~ ^[0-9a-f]{3}$ ]]; then
+    local expanded=""
+    for ((i=0; i<3; i++)); do
+      local c="${digits:i:1}"
+      expanded+="${c}${c}"
+    done
+    digits="$expanded"
+  elif [[ ! "$digits" =~ ^[0-9a-f]{6}$ ]]; then
+    die "Invalid ${label:-color} value '${value}'. Use #RGB or #RRGGBB."
+  fi
+
+  print -r -- "#${digits}"
+}
 
 if [[ $# -lt 1 ]]; then
   usage
@@ -41,16 +70,18 @@ STYLE_URL=""
 WITH_FIREBASE=""
 PAGES_CSV=""
 UI_COMPONENTS_SPEC=""
+SEO_BASE_URL_FLAG=""
+DEFAULT_COLOR_PRIMARY="#39FF14"
+DEFAULT_COLOR_SECONDARY="#FF3CAC"
+DEFAULT_COLOR_BACKGROUND="#0B0B0B"
+COLOR_PRIMARY="$DEFAULT_COLOR_PRIMARY"
+COLOR_SECONDARY="$DEFAULT_COLOR_SECONDARY"
+COLOR_BACKGROUND="$DEFAULT_COLOR_BACKGROUND"
+COLOR_MODE="light"
 
 # Parse flags (order independent)
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --pages)
-      shift || true
-      [[ $# -eq 0 ]] && die "--pages requires a value"
-      PAGES_CSV="$1"
-      shift
-      ;;
     --pages)
       shift || true
       [[ $# -eq 0 ]] && die "--pages requires a value"
@@ -103,6 +134,13 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
 
+    --seo-base-url)
+      shift || true
+      [[ $# -eq 0 ]] && die "--seo-base-url requires a value"
+      SEO_BASE_URL_FLAG="$1"
+      shift
+      ;;
+
     --components|--page-components)
       shift || true
       [[ $# -eq 0 ]] && die "--components requires a value"
@@ -118,6 +156,30 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       STYLE_URL="$1"
+      shift
+      ;;
+    --color-primary)
+      shift || true
+      [[ $# -eq 0 ]] && die "--color-primary requires a value"
+      COLOR_PRIMARY="$1"
+      shift
+      ;;
+    --color-secondary)
+      shift || true
+      [[ $# -eq 0 ]] && die "--color-secondary requires a value"
+      COLOR_SECONDARY="$1"
+      shift
+      ;;
+    --color-background)
+      shift || true
+      [[ $# -eq 0 ]] && die "--color-background requires a value"
+      COLOR_BACKGROUND="$1"
+      shift
+      ;;
+    --color-mode)
+      shift || true
+      [[ $# -eq 0 ]] && die "--color-mode requires a value"
+      COLOR_MODE="$1"
       shift
       ;;
     --firebase)
@@ -136,6 +198,16 @@ done
 
 command -v node >/dev/null || { echo "node is required"; exit 1; }
 command -v npm  >/dev/null || { echo "npm is required"; exit 1; }
+
+COLOR_PRIMARY="$(normalize_hex_color_or_die "${COLOR_PRIMARY:-}" "primary")"
+COLOR_SECONDARY="$(normalize_hex_color_or_die "${COLOR_SECONDARY:-}" "secondary")"
+COLOR_BACKGROUND="$(normalize_hex_color_or_die "${COLOR_BACKGROUND:-}" "background")"
+COLOR_MODE="$(echo "${COLOR_MODE:-light}" | tr '[:upper:]' '[:lower:]')"
+if [[ "$COLOR_MODE" != "light" && "$COLOR_MODE" != "dark" ]]; then
+  die "--color-mode must be 'light' or 'dark' (received: ${COLOR_MODE})"
+fi
+
+GENERATE_PRIMENG_TOKENS="true"
 
 # ----------------------------
 # Page selection (interactive; home always included)
@@ -184,6 +256,8 @@ ensure_page_component_entry() {
   local page="$1"
   local slug="$2"
   [[ -z "$page" || -z "$slug" ]] && return
+  slug="$(slugify "$slug")"
+  [[ -z "$slug" ]] && return
   local csv="${PAGE_LOCAL_COMPONENTS_CSV[$page]:-}"
   typeset -a existing=()
   typeset -A seen=()
@@ -192,16 +266,17 @@ ensure_page_component_entry() {
   fi
   typeset -a cleaned=()
   for item in "${existing[@]}"; do
-    item="${item//[[:space:]]/}"
+    item="${item#"${item%%[![:space:]]*}"}"
+    item="${item%"${item##*[![:space:]]}"}"
     [[ -z "$item" ]] && continue
-    local key="${item:l}"
-    if [[ -z "${seen[$key]:-}" ]]; then
-      cleaned+=("$item")
-      seen[$key]=1
+    local normalized="$(slugify "$item")"
+    [[ -z "$normalized" ]] && continue
+    if [[ -z "${seen[$normalized]:-}" ]]; then
+      cleaned+=("$normalized")
+      seen[$normalized]=1
     fi
   done
-  local slug_key="${slug:l}"
-  if [[ -z "${seen[$slug_key]:-}" ]]; then
+  if [[ -z "${seen[$slug]:-}" ]]; then
     cleaned+=("$slug")
   fi
   PAGE_LOCAL_COMPONENTS_CSV[$page]="${(j:,:)cleaned}"
@@ -240,7 +315,8 @@ handle_template_block() {
   [[ -z "$block" ]] && return
   IFS=',' read -rA entries <<< "$block"
   for entry in "${entries[@]}"; do
-    entry="${entry//[[:space:]]/}"
+    entry="${entry#"${entry%%[![:space:]]*}"}"
+    entry="${entry%"${entry##*[![:space:]]}"}"
     [[ -z "$entry" ]] && continue
     local comp=""
     local variant=""
@@ -266,19 +342,35 @@ parse_ui_components_spec() {
     segments=("$spec")
   fi
   for segment in "${segments[@]}"; do
-    local chunk="${segment//[[:space:]]/}"
-    [[ -z "$chunk" ]] && continue
-    if [[ "$chunk" == *":"* ]]; then
-      local left="${chunk%%:*}"
-      local right="${chunk#*:}"
-      if [[ "$right" == *"="* ]]; then
-        handle_template_block "$left" "$right"
-      else
-        handle_template_block "global" "$chunk"
+    local current_scope="global"
+    IFS=',' read -rA tokens <<< "$segment"
+    for token in "${tokens[@]}"; do
+      local chunk="$token"
+      chunk="${chunk#"${chunk%%[![:space:]]*}"}"
+      chunk="${chunk%"${chunk##*[![:space:]]}"}"
+      [[ -z "$chunk" ]] && continue
+
+      local scope="$current_scope"
+      local entry="$chunk"
+
+      if [[ "$chunk" == *":"* ]]; then
+        local candidate="${chunk%%:*}"
+        local remainder="${chunk#*:}"
+        candidate="${candidate#"${candidate%%[![:space:]]*}"}"
+        candidate="${candidate%"${candidate##*[![:space:]]}"}"
+        remainder="${remainder#"${remainder%%[![:space:]]*}"}"
+        remainder="${remainder%"${remainder##*[![:space:]]}"}"
+        local normalized="$(slugify "$candidate")"
+        if [[ -n "$normalized" && ( "$normalized" == "global" || -n "${VALID_PAGE_SCOPES[$normalized]:-}" ) ]]; then
+          current_scope="$normalized"
+          scope="$normalized"
+          entry="$remainder"
+        fi
       fi
-    else
-      handle_template_block "global" "$chunk"
-    fi
+
+      [[ -z "$entry" ]] && continue
+      handle_template_block "$scope" "$entry"
+    done
   done
 }
 
@@ -363,12 +455,20 @@ if [[ -n "${COMPONENTS_MAP:-}" ]]; then
   # Format: "home:Hero,CTA;about:Hero;services:Hero,Features"
   IFS=';' read -rA pairs <<< "${COMPONENTS_MAP}"
   for pair in "${pairs[@]}"; do
-    pair="${pair//[[:space:]]/}"
-    [[ -z "$pair" ]] && continue
-    key="${pair%%:*}"
-    val="${pair#*:}"
+    trimmed="$pair"
+    trimmed="${trimmed#"${trimmed%%[![:space:]]*}"}"
+    trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+    [[ -z "$trimmed" ]] && continue
+    key="${trimmed%%:*}"
+    val=""
+    if [[ "$trimmed" == *":"* ]]; then
+      val="${trimmed#*:}"
+    fi
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    val="${val#"${val%%[![:space:]]*}"}"
+    val="${val%"${val##*[![:space:]]}"}"
     [[ -z "$key" ]] && continue
-    [[ "$key" == "$pair" ]] && val=""
     PAGE_LOCAL_COMPONENTS_CSV[$key]="${val}"
   done
 else
@@ -427,16 +527,6 @@ typeset -a GLOBAL_TOP_SLUGS=()
 typeset -a GLOBAL_BEFORE_OUTLET_SLUGS=()
 typeset -a GLOBAL_AFTER_OUTLET_SLUGS=()
 typeset -a GLOBAL_BOTTOM_SLUGS=()
-
-slugify() {
-  local s="$1"
-  s="${s:l}"
-  s="${s//[^a-z0-9]/-}"
-  s="${s##-}"
-  s="${s%%-}"
-  while [[ "$s" == *"--"* ]]; do s="${s//--/-}"; done
-  echo "$s"
-}
 
 add_globals_from_csv() {
   local csv="$1"
@@ -705,6 +795,15 @@ cd "$CUSTOMERS_DIR"
 npx -y @angular/cli@latest new "$APP_NAME" --ssr --routing --style=css --skip-git --interactive=false
 cd "$APP_NAME"
 
+export APP_BRAND_TITLE="${APP_NAME}"
+if [[ -n "${SEO_BASE_URL_FLAG:-}" ]]; then
+  SEO_BASE_URL="$SEO_BASE_URL_FLAG"
+elif [[ -z "${SEO_BASE_URL:-}" ]]; then
+  SEO_BASE_URL="https://example.com"
+fi
+export SEO_BASE_URL
+export PAGE_SLUGS_LIST="${(j: :)PAGE_SLUGS}"
+
 echo "==> Disabling Angular CLI analytics prompts"
 npx -y ng analytics disable --global >/dev/null
 npx -y ng analytics disable >/dev/null
@@ -733,6 +832,32 @@ const fs = require('fs');
     process.exit(1);
   }
 })();
+NODE
+
+echo "==> Writing default robots.txt and sitemap.xml (update SEO_BASE_URL before launch)"
+node - <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const baseUrl = (process.env.SEO_BASE_URL || 'https://example.com').replace(/\/+$/, '');
+const slugStr = process.env.PAGE_SLUGS_LIST || '';
+const slugs = slugStr.split(/\s+/).filter(Boolean);
+const routes = ['/', ...slugs.map((slug) => `/${slug}`)];
+
+const sitemapEntries = routes
+  .map((route) => {
+    const full = route === '/' ? baseUrl : `${baseUrl}${route}`;
+    return `  <url>\n    <loc>${full}</loc>\n  </url>`;
+  })
+  .join('\n');
+
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Update baseUrl before launch -->\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapEntries}\n</urlset>\n`;
+fs.writeFileSync(path.join('src', 'sitemap.xml'), sitemap);
+
+const robots = `# Update sitemap URL before launch\nUser-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+fs.writeFileSync(path.join('src', 'robots.txt'), robots);
+
+console.log('Wrote src/robots.txt and src/sitemap.xml');
 NODE
 
 echo "==> Initializing Tailwind config"
@@ -786,6 +911,222 @@ if (!s.includes('@tailwind base;')) {
   fs.writeFileSync(p, s);
 }
 NODE
+
+if [[ "${GENERATE_PRIMENG_TOKENS:-}" == "true" ]]; then
+  echo "==> Writing PrimeNG styled token overrides"
+  export PRIMENG_TOKEN_PRIMARY="${COLOR_PRIMARY:-}"
+  export PRIMENG_TOKEN_SECONDARY="${COLOR_SECONDARY:-}"
+  export PRIMENG_TOKEN_BACKGROUND="${COLOR_BACKGROUND:-}"
+  export PRIMENG_COLOR_MODE="${COLOR_MODE:-light}"
+  node - <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const primary = process.env.PRIMENG_TOKEN_PRIMARY || '';
+const secondary = process.env.PRIMENG_TOKEN_SECONDARY || '';
+const background = process.env.PRIMENG_TOKEN_BACKGROUND || '';
+
+if (!primary && !secondary && !background) {
+  process.exit(0);
+}
+
+const tokens = [];
+const colorMode = (process.env.PRIMENG_COLOR_MODE || 'light').toLowerCase() === 'dark' ? 'dark' : 'light';
+
+const hexToRgb = (hex = '') => {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16),
+  };
+};
+
+const rgbToHex = ({ r, g, b }) =>
+  `#${[r, g, b]
+    .map((val) => {
+      const clamped = Math.max(0, Math.min(255, Math.round(val)));
+      return clamped.toString(16).padStart(2, '0');
+    })
+    .join('')}`;
+
+const mixColor = (base, mixWith, weight) => {
+  if (!mixWith || weight == null) return base;
+  const baseRgb = hexToRgb(base);
+  const mixRgb = hexToRgb(mixWith);
+  return rgbToHex({
+    r: baseRgb.r * (1 - weight) + mixRgb.r * weight,
+    g: baseRgb.g * (1 - weight) + mixRgb.g * weight,
+    b: baseRgb.b * (1 - weight) + mixRgb.b * weight,
+  });
+};
+
+const contrastColor = (hex = '') => {
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+};
+
+const buildScale = (base, tokenPrefix) => {
+  if (!base) return;
+  const scale = [
+    ['50', '#ffffff', 0.92],
+    ['100', '#ffffff', 0.82],
+    ['200', '#ffffff', 0.72],
+    ['300', '#ffffff', 0.55],
+    ['400', '#ffffff', 0.35],
+    ['500', null, null],
+    ['600', '#000000', 0.12],
+    ['700', '#000000', 0.24],
+    ['800', '#000000', 0.36],
+    ['900', '#000000', 0.5],
+    ['950', '#000000', 0.62],
+  ];
+  for (const [suffix, mixWith, weight] of scale) {
+    const value = mixColor(base, mixWith, weight);
+    tokens.push(`  ${tokenPrefix}-${suffix}: ${value};`);
+  }
+
+  const baseColor = mixColor(base, null, null);
+  tokens.push(`  ${tokenPrefix}-color: var(${tokenPrefix}-500);`);
+  tokens.push(`  ${tokenPrefix}-hover-color: var(${tokenPrefix}-600);`);
+  tokens.push(`  ${tokenPrefix}-active-color: var(${tokenPrefix}-700);`);
+  tokens.push(`  ${tokenPrefix}-contrast-color: ${contrastColor(baseColor)};`);
+};
+
+buildScale(primary, '--p-primary');
+buildScale(secondary, '--p-secondary');
+
+if (background) {
+  tokens.push(`  --p-surface-ground: ${background};`);
+  tokens.push(`  --p-surface-section: ${background};`);
+  tokens.push(`  --p-surface-card: ${background};`);
+  tokens.push(`  --p-surface-overlay: ${background};`);
+  tokens.push(`  --p-surface-0: ${background};`);
+}
+
+const bodyStyle = background ? `\nbody {\n  background-color: var(--p-surface-ground);\n}\n` : '';
+const content = `:root, :host {\n  color-scheme: ${colorMode};\n${tokens.join('\n')}\n}\n${bodyStyle}`;
+const outPath = path.join('src', 'styles', 'primeng-tokens.css');
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
+const existing = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8') : '';
+if (existing.trim() === content.trim()) {
+  console.log('PrimeNG tokens unchanged.');
+  process.exit(0);
+}
+fs.writeFileSync(outPath, content);
+console.log(`Wrote ${outPath}`);
+NODE
+fi
+
+if [[ "${GENERATE_PRIMENG_TOKENS:-}" == "true" ]]; then
+  export ENABLE_PRIMENG_TOKEN_CSS="true"
+else
+  export ENABLE_PRIMENG_TOKEN_CSS="false"
+fi
+
+PRIMARY_PALETTE_BLOCK="$(node - <<'NODE'
+const base = process.env.PRIMENG_TOKEN_PRIMARY || '#39FF14';
+const hexToRgb = (hex = '') => {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16),
+  };
+};
+const rgbToHex = ({ r, g, b }) =>
+  `#${[r, g, b]
+    .map((val) => Math.max(0, Math.min(255, Math.round(val))).toString(16).padStart(2, '0'))
+    .join('')}`;
+const mixColor = (baseColor, mixWith, weight) => {
+  if (!mixWith || weight == null) return baseColor;
+  const baseRgb = hexToRgb(baseColor);
+  const mixRgb = hexToRgb(mixWith);
+  return rgbToHex({
+    r: baseRgb.r * (1 - weight) + mixRgb.r * weight,
+    g: baseRgb.g * (1 - weight) + mixRgb.g * weight,
+    b: baseRgb.b * (1 - weight) + mixRgb.b * weight,
+  });
+};
+const buildScale = (baseColor) => {
+  const scale = [
+    ['50', '#ffffff', 0.92],
+    ['100', '#ffffff', 0.82],
+    ['200', '#ffffff', 0.72],
+    ['300', '#ffffff', 0.55],
+    ['400', '#ffffff', 0.35],
+    ['500', null, null],
+    ['600', '#000000', 0.12],
+    ['700', '#000000', 0.24],
+    ['800', '#000000', 0.36],
+    ['900', '#000000', 0.5],
+    ['950', '#000000', 0.62],
+  ];
+  return scale.reduce((acc, [suffix, mixWith, weight]) => {
+    acc[suffix] = mixColor(baseColor, mixWith, weight);
+    return acc;
+  }, {});
+};
+const palette = buildScale(base);
+const order = ['50','100','200','300','400','500','600','700','800','900','950'];
+for (const key of order) {
+  console.log(`  ${key}: '${palette[key]}',`);
+}
+NODE
+)"
+PRIMARY_CONTRAST_COLOR="$(node - <<'NODE'
+const base = process.env.PRIMENG_TOKEN_PRIMARY || '#39FF14';
+const hexToRgb = (hex = '') => {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16),
+  };
+};
+const { r, g, b } = hexToRgb(base);
+const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+console.log(luminance > 0.5 ? '#000000' : '#ffffff');
+NODE
+)"
+SURFACE_CONFIG_BLOCK="$(node - <<'NODE'
+const base = process.env.PRIMENG_TOKEN_BACKGROUND || '#0B0B0B';
+const hexToRgb = (hex = '') => {
+  const clean = hex.replace('#', '');
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16),
+  };
+};
+const rgbToHex = ({ r, g, b }) =>
+  `#${[r, g, b]
+    .map((val) => Math.max(0, Math.min(255, Math.round(val))).toString(16).padStart(2, '0'))
+    .join('')}`;
+const mixColor = (baseColor, mixWith, weight) => {
+  if (!mixWith || weight == null) return baseColor;
+  const baseRgb = hexToRgb(baseColor);
+  const mixRgb = hexToRgb(mixWith);
+  return rgbToHex({
+    r: baseRgb.r * (1 - weight) + mixRgb.r * weight,
+    g: baseRgb.g * (1 - weight) + mixRgb.g * weight,
+    b: baseRgb.b * (1 - weight) + mixRgb.b * weight,
+  });
+};
+const surface = {
+  ground: base,
+  section: mixColor(base, '#ffffff', 0.04),
+  card: mixColor(base, '#ffffff', 0.08),
+  overlay: mixColor(base, '#ffffff', 0.12),
+  border: mixColor(base, '#ffffff', 0.18),
+  hover: mixColor(base, '#ffffff', 0.14),
+};
+for (const [key, val] of Object.entries(surface)) {
+  console.log(`        ${key}: '${val}',`);
+}
+NODE
+)"
 
 echo "==> Generating pages (standalone) in src/app/pages (home + selected)"
 npx -y ng g component pages/home --standalone --skip-tests
@@ -855,8 +1196,16 @@ paths=()
 if (( ${#paths[@]} )); then
   while IFS= read -r file; do
     [[ "$file" == *.component.ts ]] && continue
+    [[ "$file" == *-seo.service.ts ]] && continue
+    [[ "$file" == *-seo.service.component.ts ]] && continue
     mv "$file" "${file%.ts}.component.ts"
-  done < <(find "${paths[@]}" -type f -name '*.ts' 2>/dev/null)
+  done < <(find "${paths[@]}" -type f -name '*.ts' ! -name '*-seo.service.ts' ! -name '*-seo.service.component.ts' 2>/dev/null)
+
+  # If any SEO services were previously renamed to *.service.component.ts, revert them to *.service.ts
+  while IFS= read -r serviceFile; do
+    newPath="${serviceFile%.service.component.ts}.service.ts"
+    mv "$serviceFile" "$newPath"
+  done < <(find "${paths[@]}" -type f -name '*-seo.service.component.ts' 2>/dev/null)
 fi
 
 if [[ -f src/app/app.ts && ! -f src/app/app.component.ts ]]; then
@@ -968,6 +1317,7 @@ const pageSlugs = (process.env.PAGE_SLUGS_LIST || '').split(/\s+/).filter(Boolea
 const pageLabels = (process.env.PAGE_LABELS_LIST || '').split('|').filter(Boolean);
 
 const lines = (process.env.PAGE_LOCAL_COMPONENTS_LINES || '').split(/\r?\n/).filter(Boolean);
+const brandTitle = process.env.APP_BRAND_TITLE || 'Our Site';
 
 // slugify similar to zsh slugify: lowercase, replace non-alnum with -, trim dashes, collapse.
 function isSlug(s) {
@@ -984,6 +1334,13 @@ function slugify(s) {
     .replace(/-+/g, '-');
 }
 
+const toPascal = (value = '') =>
+  value
+    .split('-')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join('');
+
 function extractTemplateUrl(tsSource) {
   const m = tsSource.match(/templateUrl:\s*['"]\.\/([^'"]+)['"]/);
   return m ? m[1] : null;
@@ -996,6 +1353,35 @@ function tagsBlock(slugs, label) {
 <!-- ${label}: ${c} -->
 <app-${c}></app-${c}>
 `).join('');
+}
+
+function stripCliPlaceholder(html = '', page = '') {
+  if (!html) return '';
+  const withoutComments = html.replace(/<!--[\s\S]*?-->/g, '').trim();
+  const pattern = new RegExp(`^<p>\\s*${page}\\s+works!\\s*</p>$`, 'i');
+  return pattern.test(withoutComments) ? '' : html;
+}
+
+const pageLabelMap = {};
+pageSlugs.forEach((slug, idx) => {
+  pageLabelMap[slug] = pageLabels[idx] || slugToTitle(slug);
+});
+pageLabelMap.home = 'Home';
+
+function slugToTitle(value = '') {
+  return value
+    .split('-')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+function labelFor(page) {
+  return pageLabelMap[page] || slugToTitle(page);
+}
+
+function escapeLiteral(value = '') {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 const mapping = new Map();
@@ -1048,6 +1434,119 @@ function bucketizeSelectedGlobals(page) {
   return { selected, ...byBucket };
 }
 
+function ensureSeoSetup(ts, { page, baseDir }) {
+  const seoClass = `${toPascal(page)}SeoService`;
+  createSeoService({ page, baseDir, className: seoClass });
+  ts = ensureCoreOnInitImport(ts);
+  ts = ensureSeoImport(ts, seoClass, page);
+  ts = ensureImplementsOnInit(ts);
+  ts = ensureSeoConstructor(ts, seoClass);
+  ts = ensureNgOnInit(ts);
+  return ts;
+}
+
+function createSeoService({ page, baseDir, className }) {
+  const servicePath = path.join(baseDir, `${page}-seo.service.ts`);
+  if (fs.existsSync(servicePath)) return;
+  const pageLabel = labelFor(page);
+  const title = `${pageLabel} | ${brandTitle}`;
+  const description =
+    page === 'home'
+      ? `Discover ${brandTitle}. Update this description inside ${className}.`
+      : `Learn more about ${pageLabel} at ${brandTitle}. Update this description inside ${className}.`;
+
+  const template = `import { Injectable } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
+
+@Injectable({ providedIn: 'root' })
+export class ${className} {
+  private readonly title = '${escapeLiteral(title)}';
+  private readonly description = '${escapeLiteral(description)}';
+
+  constructor(private readonly titleService: Title, private readonly meta: Meta) {}
+
+  apply(): void {
+    this.titleService.setTitle(this.title);
+    this.meta.updateTag({ name: 'description', content: this.description });
+    this.meta.updateTag({ property: 'og:title', content: this.title });
+    this.meta.updateTag({ property: 'og:description', content: this.description });
+  }
+}
+`;
+
+  fs.writeFileSync(servicePath, template);
+}
+
+function ensureCoreOnInitImport(ts) {
+  const coreImport = /import\s*{\s*([^}]*)\s*}\s*from\s*'@angular\/core';/;
+  if (!coreImport.test(ts)) {
+    return `import { Component, OnInit } from '@angular/core';\n${ts}`;
+  }
+  return ts.replace(coreImport, (m, inner) => {
+    const parts = inner.split(',').map((s) => s.trim()).filter(Boolean);
+    const unique = [];
+    for (const part of [...parts, 'OnInit']) {
+      if (!unique.includes(part)) unique.push(part);
+    }
+    return `import { ${unique.join(', ')} } from '@angular/core';`;
+  });
+}
+
+function ensureSeoImport(ts, seoClass, page) {
+  const importLine = `import { ${seoClass} } from './${page}-seo.service';`;
+  if (ts.includes(importLine)) return ts;
+  const importMatches = [...ts.matchAll(/^import .*;$/gm)];
+  if (importMatches.length) {
+    const last = importMatches[importMatches.length - 1];
+    const insertPos = last.index + last[0].length;
+    return `${ts.slice(0, insertPos)}\n${importLine}${ts.slice(insertPos)}`;
+  }
+  return `${importLine}\n${ts}`;
+}
+
+function ensureImplementsOnInit(ts) {
+  return ts.replace(/export class [^{]+{/, (match) => {
+    if (/implements/.test(match)) {
+      if (/OnInit/.test(match)) return match;
+      return match.replace(/implements\s+([^{]+){/, (m2, list) => `implements ${list.trim().replace(/\s+$/, '')}, OnInit {`);
+    }
+    return match.replace('{', ' implements OnInit {');
+  });
+}
+
+function ensureSeoConstructor(ts, seoClass) {
+  const injection = `private readonly pageSeo: ${seoClass}`;
+  if (new RegExp(`constructor\\s*\\([^)]*pageSeo\\s*:\\s*${seoClass}`).test(ts)) return ts;
+  const ctorRegex = /constructor\s*\(([^)]*)\)\s*{/;
+  if (ctorRegex.test(ts)) {
+    return ts.replace(ctorRegex, (m, params) => {
+      if (params.includes(seoClass)) return m;
+      const trimmed = params.trim();
+      const prefix = trimmed ? `${trimmed}, ${injection}` : injection;
+      return `constructor(${prefix}) {`;
+    });
+  }
+  return ts.replace(/export class [^{]+{/, (match) => `${match}\n  constructor(${injection}) {}\n`);
+}
+
+function ensureNgOnInit(ts) {
+  if (ts.includes('this.pageSeo.apply()')) return ts;
+  if (/ngOnInit\s*\(/.test(ts)) {
+    return ts.replace(/ngOnInit\s*\(\)\s*{([\s\S]*?)}/, (m, body) => {
+      if (body.includes('this.pageSeo.apply()')) return m;
+      const trimmed = body.trim();
+      const prefix = trimmed ? `    ${trimmed}\n` : '';
+      return `ngOnInit(): void {\n${prefix}    this.pageSeo.apply();\n  }`;
+    });
+  }
+  const ctorMatch = ts.match(/constructor\s*\([^)]*\)\s*{[\s\S]*?}\s*/);
+  if (ctorMatch) {
+    const insertAt = ctorMatch.index + ctorMatch[0].length;
+    return `${ts.slice(0, insertAt)}\n  ngOnInit(): void {\n    this.pageSeo.apply();\n  }\n${ts.slice(insertAt)}`;
+  }
+  return ts.replace(/export class [^{]+{/, (match) => `${match}\n  ngOnInit(): void {\n    this.pageSeo.apply();\n  }\n`);
+}
+
 
 for (const page of allPages) {
   const csv = (mapping.get(page) || '').trim();
@@ -1094,14 +1593,9 @@ for (const page of allPages) {
 
   let ts = fs.readFileSync(tsPath, 'utf8');
 
-  // Ensure component imports exist + add to @Component imports: []
-  const toPascal = (slug) =>
-    slug
-      .split('-')
-      .filter(Boolean)
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join('');
+  ts = ensureSeoSetup(ts, { page, baseDir });
 
+  // Ensure component imports exist + add to @Component imports: []
   const classNameOf = (slug) => `${toPascal(slug)}Component`;
 
   // Globals selected for this page (ordered by bucket)
@@ -1175,18 +1669,18 @@ for (const page of allPages) {
         const topBlock = tagsBlock(g2.top, 'Global(top)');
         const beforeBlock = tagsBlock(g2.beforeOutlet, 'Global(before)');
         const localBlock = tagsBlock(comps, 'Page-local');
-        const afterBlock = tagsBlock(g2.afterOutlet, 'Global(after)');
-        const bottomBlock = tagsBlock(g2.bottom, 'Global(bottom)');
-        const base = html;
-        html = '';
-        html += topBlock;
-        html += beforeBlock;
-        html += `\n\n<!-- Page template -->\n` + base + `\n`;
-        html += localBlock;
-        html += afterBlock;
-        html += bottomBlock;
+      const afterBlock = tagsBlock(g2.afterOutlet, 'Global(after)');
+      const bottomBlock = tagsBlock(g2.bottom, 'Global(bottom)');
+      const base = stripCliPlaceholder(html, page);
+      html = '';
+      html += topBlock;
+      html += beforeBlock;
+      html += `\n\n<!-- Page template -->\n` + (base || '<!-- Add page content -->') + `\n`;
+      html += localBlock;
+      html += afterBlock;
+      html += bottomBlock;
 
-        fs.writeFileSync(htmlPath, html);
+      fs.writeFileSync(htmlPath, html);
       }
     }
   }
@@ -1231,8 +1725,15 @@ paths=()
 if (( ${#paths[@]} )); then
   while IFS= read -r file; do
     [[ "$file" == *.component.ts ]] && continue
+    [[ "$file" == *-seo.service.ts ]] && continue
+    [[ "$file" == *-seo.service.component.ts ]] && continue
     mv "$file" "${file%.ts}.component.ts"
-  done < <(find "${paths[@]}" -type f -name '*.ts' 2>/dev/null)
+  done < <(find "${paths[@]}" -type f -name '*.ts' ! -name '*-seo.service.ts' ! -name '*-seo.service.component.ts' 2>/dev/null)
+
+  while IFS= read -r serviceFile; do
+    newPath="${serviceFile%.service.component.ts}.service.ts"
+    mv "$serviceFile" "$newPath"
+  done < <(find "${paths[@]}" -type f -name '*-seo.service.component.ts' 2>/dev/null)
 fi
 
 echo "==> Re-normalizing templates/styles to *.component.html/*.component.css (and updating templateUrl/styleUrl)"
@@ -1340,6 +1841,9 @@ function walk(dir) {
 const files = walk(root);
 
 for (const filePath of files) {
+  if (filePath.endsWith('-seo.service.ts') || filePath.endsWith('-seo.service.component.ts')) {
+    continue;
+  }
   let source = fs.readFileSync(filePath, 'utf8');
   const baseName = path.basename(filePath, '.component.ts'); // e.g. hero-about
   const desiredClass = `${toPascal(baseName)}Component`;
@@ -1424,7 +1928,7 @@ NODE
 
 
 echo "==> Configuring PrimeNG theme provider (Aura) in src/app/app.config.ts"
-cat > src/app/app.config.ts <<'APPCONFIG'
+cat > src/app/app.config.ts <<APPCONFIG
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -1435,6 +1939,56 @@ import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
 
+const primaryPalette = {
+$PRIMARY_PALETTE_BLOCK
+} as const;
+
+const surfaceTokens = {
+$SURFACE_CONFIG_BLOCK
+} as const;
+
+const neonTheme = {
+  ...Aura,
+  semantic: {
+    ...Aura.semantic,
+    primary: {
+      ...(Aura.semantic?.primary ?? {}),
+      ...primaryPalette,
+    },
+    colorScheme: {
+      ...Aura.semantic?.colorScheme,
+      light: {
+        ...Aura.semantic?.colorScheme?.light,
+        primary: {
+          ...Aura.semantic?.colorScheme?.light?.primary,
+          color: primaryPalette[500],
+          hoverColor: primaryPalette[600],
+          activeColor: primaryPalette[700],
+          contrastColor: '$PRIMARY_CONTRAST_COLOR',
+        },
+        surface: {
+          ...Aura.semantic?.colorScheme?.light?.surface,
+          ...surfaceTokens,
+        },
+      },
+      dark: {
+        ...Aura.semantic?.colorScheme?.dark,
+        primary: {
+          ...Aura.semantic?.colorScheme?.dark?.primary,
+          color: primaryPalette[500],
+          hoverColor: primaryPalette[600],
+          activeColor: primaryPalette[700],
+          contrastColor: '$PRIMARY_CONTRAST_COLOR',
+        },
+        surface: {
+          ...Aura.semantic?.colorScheme?.dark?.surface,
+          ...surfaceTokens,
+        },
+      },
+    },
+  },
+};
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
@@ -1442,7 +1996,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     providePrimeNG({
       theme: {
-        preset: Aura,
+        preset: neonTheme,
       },
     }),
   ],
@@ -1492,13 +2046,42 @@ buildOptions.styles = buildOptions.styles.filter(s => !String(s).includes('prime
 buildOptions.scripts = buildOptions.scripts || [];
 
 const ensure = (arr, val) => { if (!arr.includes(val)) arr.push(val); };
+const removeValue = (arr, val) => {
+  let idx = arr.indexOf(val);
+  while (idx !== -1) {
+    arr.splice(idx, 1);
+    idx = arr.indexOf(val);
+  }
+};
+const ensureAfter = (arr, val, afterVal) => {
+  if (!val) return;
+  removeValue(arr, val);
+  const afterIdx = arr.indexOf(afterVal);
+  if (afterIdx === -1) {
+    arr.push(val);
+  } else {
+    arr.splice(afterIdx + 1, 0, val);
+  }
+};
 
 ensure(buildOptions.assets, 'src/favicon.ico');
 ensure(buildOptions.assets, 'src/assets');
+ensure(buildOptions.assets, 'src/robots.txt');
+ensure(buildOptions.assets, 'src/sitemap.xml');
 
 ensure(buildOptions.styles, 'src/styles.css');
 ensure(buildOptions.styles, 'node_modules/primeicons/primeicons.css');
 ensure(buildOptions.styles, 'src/prime-theme.css');
+
+const tokensCss = 'src/styles/primeng-tokens.css';
+const includeTokens =
+  process.env.ENABLE_PRIMENG_TOKEN_CSS === 'true' ||
+  fs.existsSync(tokensCss);
+if (includeTokens) {
+  ensureAfter(buildOptions.styles, tokensCss, 'src/prime-theme.css');
+} else {
+  removeValue(buildOptions.styles, tokensCss);
+}
 
 
 const testOptions = j.projects[projectName]?.architect?.test?.options;
@@ -1509,10 +2092,17 @@ if (testOptions) {
 
   ensure(testOptions.assets, 'src/favicon.ico');
   ensure(testOptions.assets, 'src/assets');
+  ensure(testOptions.assets, 'src/robots.txt');
+  ensure(testOptions.assets, 'src/sitemap.xml');
 
   ensure(testOptions.styles, 'src/styles.css');
   ensure(testOptions.styles, 'node_modules/primeicons/primeicons.css');
   ensure(testOptions.styles, 'src/prime-theme.css');
+  if (includeTokens) {
+    ensureAfter(testOptions.styles, tokensCss, 'src/prime-theme.css');
+  } else {
+    removeValue(testOptions.styles, tokensCss);
+  }
 }
 
 fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
@@ -1556,7 +2146,7 @@ import { StyleClassModule } from 'primeng/styleclass';
                 class="fill-primary-contrast"
               />
             </svg>
-            <span class="text-xl font-medium text-primary-contrast">__APP_TITLE__</span>
+            <span class="text-xl font-medium text-primary-contrast whitespace-nowrap">__APP_TITLE__</span>
           </a>
         </div>
 

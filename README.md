@@ -7,6 +7,8 @@ This repo contains the automation we use to scaffold Angular-based marketing sit
 - Optional Firebase Hosting config + static build script
 - Codex-friendly docs (style reference + prompt)
 - Global/page-local component generation + UI template injection
+- Canonical page shells (Angular CLI placeholder copy is stripped automatically)
+- PrimeNG styled token overrides via `--color-*` flags (plus matching PrimeNG theme preset injection)
 
 ## Usage
 ```bash
@@ -26,6 +28,10 @@ This repo contains the automation we use to scaffold Angular-based marketing sit
   --global-components-bottom "footer" \
   --globals-per-page "home:promo-banner,chat-box,footer;about:footer;services:chat-box" \
   --style-url "https://example.com/reference" \
+  --color-primary "#0ea5e9" \
+  --color-secondary "#fbbf24" \
+  --color-background "#020617" \
+  --color-mode "dark" \
   --firebase \
   --ui-components "global:footer=simple-columns;home:hero=split,cta=primary"
 ```
@@ -37,10 +43,16 @@ This repo contains the automation we use to scaffold Angular-based marketing sit
 - `--style-url`: External inspiration link stored in docs for Codex context.
 - `--firebase`: Adds Firebase Hosting config plus `npm run build:static`/`deploy` scripts.
 - `--ui-components`: Select templates from `templates/ui-components`, either globally or per page scope (e.g., `"home:hero=split"`).
+  - If template selections are provided but `UI_TEMPLATE_LIBRARY_ROOT` or the manifest is missing, the injector exits non-zero so template application can never silently fail.
+- `--color-primary`, `--color-secondary`, `--color-background`: Accept `#RGB`/`#RRGGBB` hex values (defaults: `#39FF14`, `#FF3CAC`, `#0B0B0B`). The bootstrapper always writes `src/styles/primeng-tokens.css` with a full Prime-style scale (`--p-primary-50` … `--p-primary-950`, surface/hover/border tokens, etc.) derived from those values, ensures the stylesheet loads right after `src/prime-theme.css` in `angular.json`, and injects the same palette (including surface tokens) into `providePrimeNG({ theme: { preset: … } })` so styled-mode + semantic presets stay in sync.
+- `--color-mode`: `light` (default) or `dark`. Controls the `color-scheme` assigned to `:root`/`:host` in `primeng-tokens.css`, so user agents and PrimeNG know whether to treat the palette as light or dark.
 
 ## UI Template Library
 
 We maintain a PrimeNG/Aura-ready component catalog under `templates/ui-components/`. Each variant ships as a standalone Angular component skeleton with placeholder tokens (`__SELECTOR__`, `__CLASS_NAME__`) that get replaced when `bootstrap.zsh` injects the template into a generated project.
+
+- Rerun `UI_TEMPLATE_LIBRARY_ROOT=/absolute/path/to/templates/ui-components node scripts/inject-ui-templates.mjs` from inside a generated project any time templates or generated files change.
+- Injection logs now include a summary of any skipped components/variants (unknown slugs, missing targets, etc.) so you can fix issues immediately.
 
 ### Catalog snapshot (Dec 2025)
 
@@ -280,6 +292,17 @@ Granular variant metadata mirrors `templates/ui-components/manifest.json` (label
 - **Three by One Grid with Offset Images** – Three offset cards with centered avatars
 - **Vertical Navigation** – Vertical picker with detailed quote
 - **Vertically Scrolling** – Tall scrollable grid with fade masks
+
+## Default SEO scaffolding
+
+- `src/robots.txt` and `src/sitemap.xml` are generated automatically with placeholders for every selected route. Provide a domain via the `SEO_BASE_URL` environment variable (defaults to `https://example.com`) when running `bootstrap.zsh`, or edit the files afterwards before launch.
+- Each page has a dedicated `*-seo.service.ts` that injects Angular’s `Title` and `Meta` services. Page components call `seo.apply()` on init, so you only need to update the service’s `title`/`description` strings when final copy is ready.
+
+Example:
+
+```bash
+SEO_BASE_URL=https://acme.com ./bootstrap.zsh acme-site
+```
 
 ### Reapplying templates
 
