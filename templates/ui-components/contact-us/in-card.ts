@@ -1,0 +1,110 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+
+interface Contact {
+  name: string;
+  company: string;
+  email: string;
+  budget: string;
+  message: string;
+}
+
+@Component({
+  selector: '__SELECTOR__',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, TextareaModule],
+  template: `
+    <div class="bg-surface-0 dark:bg-surface-950 px-6 py-20 md:px-12 lg:px-20">
+      <div class="p-14 rounded-2xl bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-800">
+        <div class="grid grid-cols-1 lg:grid-cols-2 items-start gap-20 h-full">
+          <div class="flex-1 flex flex-col h-full lg:max-w-lg gap-12">
+            <div class="flex-1 flex flex-col gap-6">
+              <h2 class="text-5xl leading-tight font-bold text-surface-900 dark:text-surface-0">Are you ready to get in touch with us?</h2>
+              <p class="text-xl leading-normal text-surface-600 dark:text-surface-400">
+                Are you interested in Mistranet helping with your project? Get in touch beside and we will get back to you soon to schedule a discovery call.
+              </p>
+            </div>
+            <div class="mt-auto flex flex-col gap-4">
+              <div class="text-xl leading-normal text-surface-900 dark:text-surface-0">hi@mistranet.com</div>
+              <div class="flex items-center gap-4">
+                <a
+                  class="w-12 h-12 flex items-center justify-center bg-surface-0 dark:bg-surface-900 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full border border-surface-200 dark:border-surface-700 cursor-pointer"
+                >
+                  <i class="pi pi-discord text-xl! leading-none! text-surface-900 dark:text-surface-0"></i>
+                </a>
+                <a
+                  class="w-12 h-12 flex items-center justify-center bg-surface-0 dark:bg-surface-900 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full border border-surface-200 dark:border-surface-700 cursor-pointer"
+                >
+                  <i class="pi pi-twitter text-xl! leading-none! text-surface-900 dark:text-surface-0"></i>
+                </a>
+                <a
+                  class="w-12 h-12 flex items-center justify-center bg-surface-0 dark:bg-surface-900 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full border border-surface-200 dark:border-surface-700 cursor-pointer"
+                >
+                  <i class="pi pi-youtube text-xl! leading-none! text-surface-900 dark:text-surface-0"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 flex flex-col gap-6 h-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                pInputText
+                type="text"
+                placeholder="First Name"
+                [(ngModel)]="contact.name"
+                class="px-3 py-2 text-sm shadow-sm rounded-md border-surface-200 dark:border-surface-700"
+              />
+              <input
+                pInputText
+                type="text"
+                placeholder="Company"
+                [(ngModel)]="contact.company"
+                class="px-3 py-2 text-sm shadow-sm rounded-md border-surface-200 dark:border-surface-700"
+              />
+              <input
+                pInputText
+                type="text"
+                placeholder="Email"
+                [(ngModel)]="contact.email"
+                class="px-3 py-2 text-sm shadow-sm rounded-md border-surface-200 dark:border-surface-700"
+              />
+              <input
+                pInputText
+                type="text"
+                placeholder="Budget"
+                [(ngModel)]="contact.budget"
+                class="px-3 py-2 text-sm shadow-sm rounded-md border-surface-200 dark:border-surface-700"
+              />
+            </div>
+            <textarea
+              pInputTextarea
+              [(ngModel)]="contact.message"
+              placeholder="Message"
+              rows="8"
+              class="px-3 py-2 text-sm shadow-sm rounded-md border-surface-200 dark:border-surface-700"
+            ></textarea>
+            <button
+              pButton
+              class="px-3! py-2! text-sm! font-medium! bg-primary! border-primary! hover:bg-primary-600! hover:border-primary-600!"
+            >
+              <span pButtonLabel>Submit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+})
+export class __CLASS_NAME__ {
+  contact: Contact = {
+    name: '',
+    company: '',
+    email: '',
+    budget: '',
+    message: '',
+  };
+}

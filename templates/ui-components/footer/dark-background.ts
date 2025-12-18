@@ -1,0 +1,56 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: '__SELECTOR__',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="bg-surface-900 px-6 py-20 md:px-12 lg:px-20">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 42 42" fill="none">
+              <path d="M21 0C9.40201 0 0 9.40201 0 21C11.598 21 21 11.598 21 0Z" class="fill-surface-0" />
+              <path d="M21 42C32.598 42 42 32.598 42 21C30.402 21 21 30.402 21 42Z" class="fill-surface-0" />
+              <path d="M21 0C32.598 0 42 9.40201 42 21C30.402 21 21 11.598 21 0Z" class="fill-surface-0" />
+              <path d="M21 42C9.40201 42 -1.01393e-06 32.598 0 21C11.598 21 21 30.402 21 42Z" class="fill-surface-0" />
+            </svg>
+            <span class="text-surface-0 text-lg font-semibold leading-tight">AlphaHex</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-surface-0 font-bold leading-tight mb-5">Company</div>
+          <div class="flex flex-col gap-4">
+            @for (item of companyLinks; track item) {
+              <a class="text-surface-200 hover:text-surface-0 leading-tight transition-colors cursor-pointer">
+                {{ item }}
+              </a>
+            }
+          </div>
+        </div>
+        <div>
+          <div class="text-surface-0 font-bold leading-tight mb-5">Resources</div>
+          <div class="flex flex-col gap-4">
+            @for (item of resourceLinks; track item) {
+              <a class="text-surface-200 hover:text-surface-0 leading-tight transition-colors cursor-pointer">
+                {{ item }}
+              </a>
+            }
+          </div>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-1">
+          <div class="flex flex-col gap-2">
+            <div class="text-surface-0 leading-normal">Jacob Obrechtstraat 5, 1071 KC Amsterdam The Netherlands</div>
+            <div class="text-surface-0 leading-tight">(31) 20 779 8986</div>
+            <div class="text-surface-0 leading-tight">hello@bastion.co</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+})
+export class __CLASS_NAME__ {
+  companyLinks = ['About Us', 'News', 'Investor Relations', 'Careers', 'Media Kit'];
+  resourceLinks = ['Get Started', 'Learn', 'Case Studies'];
+}

@@ -1,161 +1,997 @@
 {
   "banner": {
     "label": "Banner",
+    "description": "Promotional announcement bars and countdown headers",
     "variants": {
       "dark-and-full-width": {
         "label": "Dark & Full Width",
         "description": "Full-width announcement bar with dismiss CTA",
         "file": "banner/dark-and-full-width.ts"
+      },
+      "condensed-and-colored": {
+        "label": "Condensed & Colored",
+        "description": "Compact primary banner with icon + dismiss",
+        "file": "banner/condensed-and-colored.ts"
+      },
+      "condensed-and-gradient": {
+        "label": "Condensed & Gradient",
+        "description": "Gradient banner with verification CTA",
+        "file": "banner/condensed-and-gradient.ts"
+      },
+      "countdown": {
+        "label": "Countdown",
+        "description": "Live sale countdown with CTA buttons",
+        "file": "banner/countdown.ts"
+      },
+      "full-width-with-background-images": {
+        "label": "Full Width w/ BG Images",
+        "description": "Full-width announcement with mirrored background art",
+        "file": "banner/full-width-with-background-images.ts"
       }
     }
   },
   "blog": {
     "label": "Blog",
+    "description": "Editorial grids and article highlight layouts",
     "variants": {
       "highlighted-articles": {
         "label": "Highlighted Articles",
         "description": "Three-card editorial grid",
         "file": "blog/highlighted-articles.ts"
+      },
+      "alternating": {
+        "label": "Alternating",
+        "description": "Two-column alternating feature list",
+        "file": "blog/alternating.ts"
+      },
+      "emphasized-post": {
+        "label": "Emphasized Post",
+        "description": "Hero post with two side articles",
+        "file": "blog/emphasized-post.ts"
+      },
+      "gradient-border": {
+        "label": "Gradient Border",
+        "description": "Three-card grid with gradient borders and avatars",
+        "file": "blog/gradient-border.ts"
+      },
+      "three-columns-with-images": {
+        "label": "Three Columns w/ Images",
+        "description": "Three-card grid with author avatars",
+        "file": "blog/three-columns-with-images.ts"
+      },
+      "three-columns-with-lines": {
+        "label": "Three Columns w/ Lines",
+        "description": "Three-card grid with accent line headers",
+        "file": "blog/three-columns-with-lines.ts"
+      },
+      "three-columns-with-tags": {
+        "label": "Three Columns w/ Tags",
+        "description": "Three-card grid with metadata chips",
+        "file": "blog/three-columns-with-tags.ts"
+      },
+      "two-column-cards": {
+        "label": "Two Column Cards",
+        "description": "Responsive two-column cards with image + excerpt",
+        "file": "blog/two-column-cards.ts"
+      },
+      "two-columns-with-emphasized-heading": {
+        "label": "Two Columns w/ Emphasized Heading",
+        "description": "Two-column list with highlighted intro column",
+        "file": "blog/two-columns-with-emphasized-heading.ts"
       }
     }
   },
   "contact-us": {
     "label": "Contact Us",
+    "description": "Contact cards with maps, tabs, and cover imagery",
     "variants": {
       "two-column": {
         "label": "Two Column",
         "description": "Details with contact form",
         "file": "contact-us/two-column.ts"
+      },
+      "address-tabs": {
+        "label": "Address Tabs",
+        "description": "Tabbed office selector with map",
+        "file": "contact-us/address-tabs.ts"
+      },
+      "centered-with-badge": {
+        "label": "Centered w/ Badge",
+        "description": "Centered form with avatar badge and CTA",
+        "file": "contact-us/centered-with-badge.ts"
+      },
+      "floating-card-on-cover": {
+        "label": "Floating Card on Cover",
+        "description": "Hero cover with floating contact card",
+        "file": "contact-us/floating-card-on-cover.ts"
+      },
+      "in-card": {
+        "label": "In Card",
+        "description": "Two-column in-card layout with form and details",
+        "file": "contact-us/in-card.ts"
+      },
+      "two-columns": {
+        "label": "Two Columns",
+        "description": "Side-by-side contact form with contact details",
+        "file": "contact-us/two-columns.ts"
+      },
+      "two-columns-with-image": {
+        "label": "Two Columns w/ Image",
+        "description": "Split layout with hero image and form",
+        "file": "contact-us/two-columns-with-image.ts"
+      },
+      "two-rows-with-map": {
+        "label": "Two Rows w/ Map",
+        "description": "Contact summary with map image",
+        "file": "contact-us/two-rows-with-map.ts"
+      },
+      "with-cover-and-map": {
+        "label": "With Cover & Map",
+        "description": "Hero cover with form + map card",
+        "file": "contact-us/with-cover-and-map.ts"
       }
     }
   },
   "content": {
     "label": "Content",
+    "description": "Storytelling copy blocks and text/image sections",
     "variants": {
       "simple-centered": {
         "label": "Simple Centered",
         "description": "Centered copy with supporting text",
         "file": "content/simple-centered.ts"
+      },
+      "centered": {
+        "label": "Centered",
+        "description": "Rich article layout with tags/image",
+        "file": "content/centered.ts"
+      },
+      "three-columns": {
+        "label": "Three Columns",
+        "description": "Hero + three-column content layout",
+        "file": "content/three-columns.ts"
+      },
+      "two-columns-with-image": {
+        "label": "Two Columns w/ Image",
+        "description": "Article layout with image aside",
+        "file": "content/two-columns-with-image.ts"
       }
     }
   },
   "cta": {
     "label": "CTA",
+    "description": "Bold call-to-action layouts with imagery and buttons",
     "variants": {
       "primary": {
         "label": "Primary",
         "description": "Bold CTA banner",
         "file": "cta/primary.ts"
+      },
+      "simple-centered": {
+        "label": "Simple Centered",
+        "description": "Centered CTA with Discord badge",
+        "file": "cta/simple-centered.ts"
+      },
+      "branded-with-background-image": {
+        "label": "Branded w/ Background Image",
+        "description": "High-impact CTA with full-bleed image",
+        "file": "cta/branded-with-background-image.ts"
+      },
+      "dark-background-with-features-and-image": {
+        "label": "Dark Background w/ Features",
+        "description": "Two-column CTA with feature bullets + image",
+        "file": "cta/dark-background-with-features-and-image.ts"
+      },
+      "dark-background-with-image": {
+        "label": "Dark Background w/ Image",
+        "description": "Headline, copy, and image card CTA",
+        "file": "cta/dark-background-with-image.ts"
+      },
+      "gradient-background": {
+        "label": "Gradient Background",
+        "description": "Split CTA with gradient card",
+        "file": "cta/gradient-background.ts"
+      },
+      "gradient-background-with-effects": {
+        "label": "Gradient Background w/ Effects",
+        "description": "Glow-heavy CTA with layered imagery",
+        "file": "cta/gradient-background-with-effects.ts"
+      },
+      "image-background": {
+        "label": "Image Background",
+        "description": "Split CTA with image overlay",
+        "file": "cta/image-background.ts"
+      },
+      "overlapping-image": {
+        "label": "Overlapping Image",
+        "description": "Overlapping photo with monochrome CTA card",
+        "file": "cta/overlapping-image.ts"
+      },
+      "split-content": {
+        "label": "Split Content",
+        "description": "Split CTA with badges and dual buttons",
+        "file": "cta/split-content.ts"
+      },
+      "two-columns-with-cta": {
+        "label": "Two Columns w/ CTA",
+        "description": "Dual card CTA with subscription form",
+        "file": "cta/two-columns-with-cta.ts"
+      },
+      "two-columns-with-images": {
+        "label": "Two Columns w/ Images",
+        "description": "Side-by-side CTA cards with avatars and pricing",
+        "file": "cta/two-columns-with-images.ts"
+      },
+      "with-browser-mockup": {
+        "label": "With Browser Mockup",
+        "description": "Radial gradient CTA with floating browser mockup",
+        "file": "cta/with-browser-mockup.ts"
       }
     }
   },
   "faq": {
     "label": "FAQ",
+    "description": "Question-and-answer sections using accordions and grids",
     "variants": {
       "accordion": {
         "label": "Accordion",
         "description": "Three question accordion",
         "file": "faq/accordion.ts"
+      },
+      "glassmorphic-accordion": {
+        "label": "Glassmorphic Accordion",
+        "description": "Glassmorphic FAQ accordion with frosted overlay",
+        "file": "faq/glassmorphic-accordion.ts"
+      },
+      "simple-accordion": {
+        "label": "Simple Accordion",
+        "description": "Bordered accordion with centered heading",
+        "file": "faq/simple-accordion.ts"
+      },
+      "side-by-side": {
+        "label": "Side by Side",
+        "description": "Two-column FAQ answers with dividing rules",
+        "file": "faq/side-by-side.ts"
+      },
+      "three-columns": {
+        "label": "Three Columns",
+        "description": "Three-column FAQ grid with concise answers",
+        "file": "faq/three-columns.ts"
+      },
+      "three-columns-with-cards": {
+        "label": "Three Columns w/ Cards",
+        "description": "Three-column FAQ cards with borders",
+        "file": "faq/three-columns-with-cards.ts"
+      },
+      "two-accordion-columns": {
+        "label": "Two Accordion Columns",
+        "description": "Dual-column accordion groups with category headings",
+        "file": "faq/two-accordion-columns.ts"
+      },
+      "two-by-four-grid": {
+        "label": "Two by Four Grid",
+        "description": "Two-column grid grouped into four rows",
+        "file": "faq/two-by-four-grid.ts"
+      },
+      "two-columns-with-accordion-questions": {
+        "label": "Two Columns w/ Accordion Questions",
+        "description": "Labeled two-section accordion FAQ list",
+        "file": "faq/two-columns-with-accordion-questions.ts"
+      },
+      "with-contact-card": {
+        "label": "With Contact Card",
+        "description": "Accordion FAQ with supporting contact CTA card",
+        "file": "faq/with-contact-card.ts"
       }
     }
   },
   "feature": {
     "label": "Feature",
+    "description": "Feature highlight sections with icons, tabs, and screenshots",
     "variants": {
       "icons-grid": {
         "label": "Icons Grid",
         "description": "4-up icon grid",
         "file": "feature/icons-grid.ts"
+      },
+      "centered-three-by-three-grid": {
+        "label": "Centered 3x3 Grid",
+        "description": "Centered nine-card feature grid with icons",
+        "file": "feature/centered-three-by-three-grid.ts"
+      },
+      "centered-three-by-two-grid-boxes": {
+        "label": "Centered 3x2 Grid Boxes",
+        "description": "Six-card database feature grid with icons",
+        "file": "feature/centered-three-by-two-grid-boxes.ts"
+      },
+      "centered-two-by-two-simple-grid": {
+        "label": "Centered 2x2 Simple Grid",
+        "description": "Two-column security feature tiles with arrows",
+        "file": "feature/centered-two-by-two-simple-grid.ts"
+      },
+      "dark-feature-list": {
+        "label": "Dark Feature List",
+        "description": "Dark radial feature list with angled card art",
+        "file": "feature/dark-feature-list.ts"
+      },
+      "dark-feature-list-with-screen-shot": {
+        "label": "Dark Feature List w/ Screenshot",
+        "description": "Dark feature list with floating screenshot",
+        "file": "feature/dark-feature-list-with-screen-shot.ts"
+      },
+      "feature-grid-with-image": {
+        "label": "Feature Grid w/ Image",
+        "description": "Two-column feature grid with supporting image",
+        "file": "feature/feature-grid-with-image.ts"
+      },
+      "feature-list-with-image": {
+        "label": "Feature List w/ Image",
+        "description": "Feature list with badge and supporting image",
+        "file": "feature/feature-list-with-image.ts"
+      },
+      "feature-timeline-with-image": {
+        "label": "Feature Timeline w/ Image",
+        "description": "Timeline-style feature list with supporting image",
+        "file": "feature/feature-timeline-with-image.ts"
+      },
+      "floating-card-with-background-image": {
+        "label": "Floating Card w/ Background Image",
+        "description": "Full-bleed hero with floating feature cards",
+        "file": "feature/floating-card-with-background-image.ts"
+      },
+      "four-by-one-with-logos": {
+        "label": "4x1 w/ Logos",
+        "description": "Four-card feature grid with logo imagery",
+        "file": "feature/four-by-one-with-logos.ts"
+      },
+      "four-features-centered-image": {
+        "label": "4 Features Centered Image",
+        "description": "Four feature callouts flanking center image",
+        "file": "feature/four-features-centered-image.ts"
+      },
+      "horizontal-tabs": {
+        "label": "Horizontal Tabs",
+        "description": "Hover-driven horizontal feature tabs",
+        "file": "feature/horizontal-tabs.ts"
+      },
+      "overlapping-card": {
+        "label": "Overlapping Card",
+        "description": "Hero background with overlapping feature cards",
+        "file": "feature/overlapping-card.ts"
+      },
+      "sliding-screenshots": {
+        "label": "Sliding Screenshots",
+        "description": "Interactive feature tabs with screenshot carousel",
+        "file": "feature/sliding-screenshots.ts"
+      },
+      "testimonal-badge-c-t-a-and-image": {
+        "label": "Testimonial Badge CTA & Image",
+        "description": "Split CTA with badge, quote, and theme-aware image",
+        "file": "feature/testimonal-badge-c-t-a-and-image.ts"
+      },
+      "three-by-one-with-colored-icons": {
+        "label": "3x1 w/ Colored Icons",
+        "description": "Three feature cards with colored icon badges",
+        "file": "feature/three-by-one-with-colored-icons.ts"
+      },
+      "three-by-two-grid-with-big-image": {
+        "label": "3x2 Grid w/ Big Image",
+        "description": "Six feature grid under hero image",
+        "file": "feature/three-by-two-grid-with-big-image.ts"
+      },
+      "three-by-two-grid-with-big-image-and-icons": {
+        "label": "3x2 Grid w/ Big Image & Icons",
+        "description": "Six feature grid with icons under hero image",
+        "file": "feature/three-by-two-grid-with-big-image-and-icons.ts"
+      },
+      "three-features-with-cta": {
+        "label": "3 Features w/ CTA",
+        "description": "Three feature callouts with CTA column",
+        "file": "feature/three-features-with-cta.ts"
+      },
+      "three-main-features-with-sub-features": {
+        "label": "3 Main Features w/ Sub Features",
+        "description": "Three feature columns with sub-feature checklist",
+        "file": "feature/three-main-features-with-sub-features.ts"
+      },
+      "timeline": {
+        "label": "Timeline",
+        "description": "Responsive feature timeline with imagery",
+        "file": "feature/timeline.ts"
+      },
+      "two-by-five-grid-accordion": {
+        "label": "2x5 Grid Accordion",
+        "description": "Two-column accordion grid for services/support",
+        "file": "feature/two-by-five-grid-accordion.ts"
+      },
+      "two-columns-with-icon-line": {
+        "label": "Two Columns w/ Icon Line",
+        "description": "Two-column feature list with vertical icon line",
+        "file": "feature/two-columns-with-icon-line.ts"
+      },
+      "two-sub-features-buttons-and-image": {
+        "label": "Two Sub Features w/ Image",
+        "description": "Two sub-feature callouts alongside hero image",
+        "file": "feature/two-sub-features-buttons-and-image.ts"
+      },
+      "vertical-tabs": {
+        "label": "Vertical Tabs",
+        "description": "Vertical hover tabs with hero screenshot",
+        "file": "feature/vertical-tabs.ts"
+      },
+      "with-chips": {
+        "label": "With Chips",
+        "description": "Chip-based feature selector with preview",
+        "file": "feature/with-chips.ts"
+      },
+      "alternating-sections-with-sub-features": {
+        "label": "Alternating Sections w/ Sub Features",
+        "description": "Alternating image/text feature rows with bullet lists",
+        "file": "feature/alternating-sections-with-sub-features.ts"
       }
     }
   },
   "footer": {
     "label": "Footer",
+    "description": "Footer layouts with multi-column links and CTAs",
     "variants": {
       "simple-columns": {
         "label": "Simple Columns",
         "description": "Four-column footer with signup",
         "file": "footer/simple-columns.ts"
+      },
+      "centered": {
+        "label": "Centered",
+        "description": "Centered footer with nav links and social icons",
+        "file": "footer/centered.ts"
+      },
+      "dark-background": {
+        "label": "Dark Background",
+        "description": "Dark footer with four columns and contact info",
+        "file": "footer/dark-background.ts"
+      },
+      "dark-background-4-columns-with-image": {
+        "label": "Dark BG 4 Columns w/ Image",
+        "description": "Large image-backed footer with four columns",
+        "file": "footer/dark-background-4-columns-with-image.ts"
+      },
+      "dark-background-single-row": {
+        "label": "Dark Background Single Row",
+        "description": "Single-row dark footer with links + social icons",
+        "file": "footer/dark-background-single-row.ts"
+      },
+      "four-columns-with-cta": {
+        "label": "4 Columns w/ CTA",
+        "description": "Four-column footer with signup CTA",
+        "file": "footer/four-columns-with-cta.ts"
+      },
+      "simple-floating": {
+        "label": "Simple Floating",
+        "description": "Floating card footer with nav + social links",
+        "file": "footer/simple-floating.ts"
+      },
+      "six-columns-with-cta": {
+        "label": "6 Columns w/ CTA",
+        "description": "Six-column footer with CTA and social links",
+        "file": "footer/six-columns-with-cta.ts"
+      },
+      "three-column-with-newsletter": {
+        "label": "3 Column w/ Newsletter",
+        "description": "Three-column footer with newsletter signup",
+        "file": "footer/three-column-with-newsletter.ts"
+      },
+      "three-columns": {
+        "label": "Three Columns",
+        "description": "Two link columns with brand summary footer",
+        "file": "footer/three-columns.ts"
       }
     }
   },
   "hero": {
     "label": "Hero",
+    "description": "Above-the-fold hero sections with media and forms",
     "variants": {
       "split": {
         "label": "Split",
         "description": "Two-column hero with media",
         "file": "hero/split.ts"
+      },
+      "right-aligned-image": {
+        "label": "Right Aligned Image",
+        "description": "Copy column with right-aligned hero image",
+        "file": "hero/right-aligned-image.ts"
+      },
+      "centered-product-image": {
+        "label": "Centered Product Image",
+        "description": "Centered hero with floating product screenshot",
+        "file": "hero/centered-product-image.ts"
+      },
+      "dark-image-background": {
+        "label": "Dark Image Background",
+        "description": "Dark image hero with newsletter signup",
+        "file": "hero/dark-image-background.ts"
+      },
+      "dark-with-illustration": {
+        "label": "Dark w/ Illustration",
+        "description": "Dark hero with illustration and CTA list",
+        "file": "hero/dark-with-illustration.ts"
+      },
+      "form-and-video-aligned-image": {
+        "label": "Form + Video Aligned",
+        "description": "Split hero with signup form and embedded video",
+        "file": "hero/form-and-video-aligned-image.ts"
+      },
+      "light-image-background": {
+        "label": "Light Image Background",
+        "description": "Light hero with radial overlay and CTA buttons",
+        "file": "hero/light-image-background.ts"
+      },
+      "with-phone": {
+        "label": "With Phone",
+        "description": "Text-first hero with phone mockup",
+        "file": "hero/with-phone.ts"
+      },
+      "with-three-d-emoji": {
+        "label": "With 3D Emoji",
+        "description": "3D emoji hero with dual CTAs and image",
+        "file": "hero/with-three-d-emoji.ts"
       }
     }
   },
   "logo-cloud": {
     "label": "Logo Cloud",
+    "description": "Logo showcase grids, sliders, and floating cards",
     "variants": {
       "minimal": {
         "label": "Minimal",
         "description": "Simple text-based logo row",
         "file": "logo-cloud/minimal.ts"
+      },
+      "colored": {
+        "label": "Colored",
+        "description": "Colorful logo grid with brand badges",
+        "file": "logo-cloud/colored.ts"
+      },
+      "simple": {
+        "label": "Simple",
+        "description": "Minimal five-column logo grid",
+        "file": "logo-cloud/simple.ts"
+      },
+      "two-by-four-floating-grid-cards": {
+        "label": "2x4 Floating Grid",
+        "description": "Floating sponsor cards with CTA and button",
+        "file": "logo-cloud/two-by-four-floating-grid-cards.ts"
+      },
+      "two-by-three-grid-cards": {
+        "label": "2x3 Grid Cards",
+        "description": "Bordered sponsor cards with CTA button",
+        "file": "logo-cloud/two-by-three-grid-cards.ts"
+      },
+      "two-columns": {
+        "label": "Two Columns",
+        "description": "Split text + compact logo grid layout",
+        "file": "logo-cloud/two-columns.ts"
+      },
+      "grid": {
+        "label": "Grid",
+        "description": "Four-column bordered logo grid",
+        "file": "logo-cloud/grid.ts"
+      },
+      "coloredbackground": {
+        "label": "Colored Background",
+        "description": "Primary-colored logo grid with headline",
+        "file": "logo-cloud/coloredbackground.ts"
+      },
+      "darkbackground": {
+        "label": "Dark Background",
+        "description": "Dark logo grid with white text",
+        "file": "logo-cloud/darkbackground.ts"
+      },
+      "fading-slider-on-dark-card": {
+        "label": "Fading Slider on Dark Card",
+        "description": "Infinite logo marquee inside a dark card",
+        "file": "logo-cloud/fading-slider-on-dark-card.ts"
+      },
+      "fading-slider": {
+        "label": "Fading Slider",
+        "description": "Auto-scrolling logo marquee with fade masks",
+        "file": "logo-cloud/fading-slider.ts"
       }
     }
   },
   "navbar": {
     "label": "Navbar",
+    "description": "Navigation bars, mega menus, and header patterns",
     "variants": {
       "stacked": {
         "label": "Stacked",
         "description": "Stacked nav summary",
         "file": "navbar/stacked.ts"
+      },
+      "centered-logo": {
+        "label": "Centered Logo",
+        "description": "Centered logo navbar with dropdowns",
+        "file": "navbar/centered-logo.ts"
+      },
+      "centered-menu": {
+        "label": "Centered Menu",
+        "description": "Centered menu navbar with dropdowns",
+        "file": "navbar/centered-menu.ts"
+      },
+      "colored-right-aligned-menu": {
+        "label": "Colored Right-Aligned Menu",
+        "description": "Primary navbar with right-aligned dropdown menu",
+        "file": "navbar/colored-right-aligned-menu.ts"
+      },
+      "dark-mega-menu": {
+        "label": "Dark Mega Menu",
+        "description": "Dark mega dropdown with marketing column",
+        "file": "navbar/dark-mega-menu.ts"
+      },
+      "dark-mega-menu-with-featured-section": {
+        "label": "Dark Mega Menu w/ Feature",
+        "description": "Mega menu with interactive featured content",
+        "file": "navbar/dark-mega-menu-with-featured-section.ts"
+      },
+      "floating-mega-menu-with-image-section": {
+        "label": "Floating Mega Menu",
+        "description": "Floating mega menu with image panel",
+        "file": "navbar/floating-mega-menu-with-image-section.ts"
+      },
+      "full-height-menu": {
+        "label": "Full Height Menu",
+        "description": "Full height navbar with dropdown",
+        "file": "navbar/full-height-menu.ts"
+      },
+      "ghost-submenu-with-categories": {
+        "label": "Ghost Submenu w/ Categories",
+        "description": "Ghost mega menu with category column",
+        "file": "navbar/ghost-submenu-with-categories.ts"
+      },
+      "ghost-submenu-with-footer": {
+        "label": "Ghost Submenu w/ Footer",
+        "description": "Ghost submenu dropdown with footer links",
+        "file": "navbar/ghost-submenu-with-footer.ts"
+      },
+      "ghost-three-by-two-grid-submenu": {
+        "label": "Ghost Three-by-Two Grid",
+        "description": "Ghost submenu with two-column grid",
+        "file": "navbar/ghost-three-by-two-grid-submenu.ts"
+      },
+      "left-aligned-mega-menu": {
+        "label": "Left Aligned Mega Menu",
+        "description": "Left aligned mega menu grid",
+        "file": "navbar/left-aligned-mega-menu.ts"
+      },
+      "mega-menu-with-featured-section": {
+        "label": "Mega Menu with Featured",
+        "description": "Gradient mega menu with featured list",
+        "file": "navbar/mega-menu-with-featured-section.ts"
       }
     }
   },
   "newsletter": {
     "label": "Newsletter",
+    "description": "Newsletter opt-in cards and split signup sections",
     "variants": {
       "card": {
         "label": "Card",
         "description": "Carded subscribe form",
         "file": "newsletter/card.ts"
+      },
+      "gradient-background": {
+        "label": "Gradient Background",
+        "description": "Gradient hero newsletter form",
+        "file": "newsletter/gradient-background.ts"
+      },
+      "pattern-background": {
+        "label": "Pattern Background",
+        "description": "Pattern hero with latest posts",
+        "file": "newsletter/pattern-background.ts"
+      },
+      "simple-2-column": {
+        "label": "Simple 2 Column",
+        "description": "Two-column copy and form",
+        "file": "newsletter/simple-2-column.ts"
+      },
+      "simple-centered": {
+        "label": "Simple Centered",
+        "description": "Centered badge, heading, and input group",
+        "file": "newsletter/simple-centered.ts"
+      },
+      "with-background-image-grid": {
+        "label": "With Background Image Grid",
+        "description": "Hero with animated grid background",
+        "file": "newsletter/with-background-image-grid.ts"
+      },
+      "with-image": {
+        "label": "With Image",
+        "description": "Two-column copy with large image",
+        "file": "newsletter/with-image.ts"
       }
     }
   },
   "pricing": {
     "label": "Pricing",
+    "description": "Pricing tables, tier cards, and comparison layouts",
     "variants": {
       "tiers": {
         "label": "Tiers",
         "description": "Two-plan pricing",
         "file": "pricing/tiers.ts"
+      },
+      "three-tiers": {
+        "label": "Three Tiers",
+        "description": "Three column pricing layout",
+        "file": "pricing/three-tiers.ts"
+      },
+      "comparison-table": {
+        "label": "Comparison Table",
+        "description": "Pricing comparison matrix",
+        "file": "pricing/comparison-table.ts"
+      },
+      "multi-colored": {
+        "label": "Multi-Colored",
+        "description": "Three pricing cards with toggle",
+        "file": "pricing/multi-colored.ts"
+      },
+      "single-tier-with-features": {
+        "label": "Single Tier w/ Features",
+        "description": "Single plan with feature list",
+        "file": "pricing/single-tier-with-features.ts"
+      },
+      "three-floating-card-tiers": {
+        "label": "Three Floating Card Tiers",
+        "description": "Floating cards pricing layout",
+        "file": "pricing/three-floating-card-tiers.ts"
+      },
+      "three-ticket-tiers": {
+        "label": "Three Ticket Tiers",
+        "description": "Ticket-inspired pricing layout",
+        "file": "pricing/three-ticket-tiers.ts"
+      },
+      "three-tiers-with-selection": {
+        "label": "Three Tiers w/ Selection",
+        "description": "Selectable pricing tiers with feature detail",
+        "file": "pricing/three-tiers-with-selection.ts"
+      },
+      "two-tiers": {
+        "label": "Two Tiers",
+        "description": "Two card pricing with annual toggle",
+        "file": "pricing/two-tiers.ts"
+      },
+      "with-payment-options": {
+        "label": "With Payment Options",
+        "description": "Free, monthly, and yearly pricing cards",
+        "file": "pricing/with-payment-options.ts"
       }
     }
   },
   "stats": {
     "label": "Stats",
+    "description": "Metric highlight sections with counters and grids",
     "variants": {
       "three-column": {
         "label": "3 Column",
         "description": "Three stat callouts",
         "file": "stats/three-column.ts"
+      },
+      "centered-with-dark-background": {
+        "label": "Centered w/ Dark Background",
+        "description": "Centered stats on dark hero",
+        "file": "stats/centered-with-dark-background.ts"
+      },
+      "colored-four-by-one-grid": {
+        "label": "Colored Four-by-One Grid",
+        "description": "Four stat cards with icons",
+        "file": "stats/colored-four-by-one-grid.ts"
+      },
+      "dark-two-by-two-grid": {
+        "label": "Dark Two-by-Two Grid",
+        "description": "Dark layout with stats and logos",
+        "file": "stats/dark-two-by-two-grid.ts"
+      },
+      "four-column-with-colored-icons": {
+        "label": "Four Column w/ Colored Icons",
+        "description": "Four stat cards with icons and descriptions",
+        "file": "stats/four-column-with-colored-icons.ts"
+      },
+      "image-background": {
+        "label": "Image Background",
+        "description": "Dark hero with blended stat cards",
+        "file": "stats/image-background.ts"
+      },
+      "minimal-three-columns": {
+        "label": "Minimal Three Columns",
+        "description": "Three centered stats on dark background",
+        "file": "stats/minimal-three-columns.ts"
+      },
+      "minimal-two-by-two-grid": {
+        "label": "Minimal Two-by-Two Grid",
+        "description": "Two-by-two stats with primary accent",
+        "file": "stats/minimal-two-by-two-grid.ts"
+      },
+      "simple-four-by-one-grid": {
+        "label": "Simple Four-by-One Grid",
+        "description": "Four stat cards with titles/descriptions",
+        "file": "stats/simple-four-by-one-grid.ts"
       }
     }
   },
   "team": {
     "label": "Team",
+    "description": "Team member grids, bios, and hover overlays",
     "variants": {
       "grid": {
         "label": "Grid",
         "description": "Two-column team grid",
         "file": "team/grid.ts"
+      },
+      "cards": {
+        "label": "Cards",
+        "description": "Carded team members with socials",
+        "file": "team/cards.ts"
+      },
+      "glass-overlay-icons": {
+        "label": "Glass Overlay Icons",
+        "description": "Team cards with glass social overlay",
+        "file": "team/glass-overlay-icons.ts"
+      },
+      "grid-with-larger-images": {
+        "label": "Grid with Larger Images",
+        "description": "Circular team grid with social links",
+        "file": "team/grid-with-larger-images.ts"
+      },
+      "grid-with-smaller-image": {
+        "label": "Grid with Smaller Image",
+        "description": "Dense avatar grid",
+        "file": "team/grid-with-smaller-image.ts"
+      },
+      "three-columns": {
+        "label": "Three Columns",
+        "description": "Three-column bios with social buttons",
+        "file": "team/three-columns.ts"
+      },
+      "two-by-four-grid-with-floating-cards": {
+        "label": "Two by Four Grid w/ Cards",
+        "description": "Floating cards over grid",
+        "file": "team/two-by-four-grid-with-floating-cards.ts"
+      },
+      "two-by-four-grid-with-images": {
+        "label": "Two by Four Grid w/ Images",
+        "description": "Hover-reveal social grid",
+        "file": "team/two-by-four-grid-with-images.ts"
+      },
+      "two-by-two-grid-with-bio-and-icons": {
+        "label": "Two by Two Grid w/ Bio and Icons",
+        "description": "Two column team bios with socials",
+        "file": "team/two-by-two-grid-with-bio-and-icons.ts"
+      },
+      "two-columns-with-vertical-list": {
+        "label": "Two Columns w/ Vertical List",
+        "description": "Narrative column and stacked bios",
+        "file": "team/two-columns-with-vertical-list.ts"
+      },
+      "with-bio": {
+        "label": "With Bio",
+        "description": "Side intro with detailed bios",
+        "file": "team/with-bio.ts"
+      },
+      "with-glass-overlay": {
+        "label": "With Glass Overlay",
+        "description": "Glass overlays on team cards",
+        "file": "team/with-glass-overlay.ts"
+      },
+      "with-hover-overlay": {
+        "label": "With Hover Overlay",
+        "description": "Hover overlay with bios",
+        "file": "team/with-hover-overlay.ts"
       }
     }
   },
   "testimonial": {
     "label": "Testimonial",
+    "description": "Testimonial layouts including quotes, carousels, and grids",
     "variants": {
       "quote-card": {
         "label": "Quote Card",
         "description": "Single highlighted quote",
         "file": "testimonial/quote-card.ts"
+      },
+      "background-image": {
+        "label": "Background Image",
+        "description": "Full-bleed background testimonial",
+        "file": "testimonial/background-image.ts"
+      },
+      "big-image-and-stars": {
+        "label": "Big Image and Stars",
+        "description": "Image-left testimonial with rating",
+        "file": "testimonial/big-image-and-stars.ts"
+      },
+      "card-stack": {
+        "label": "Card Stack",
+        "description": "Stacked testimonial cards with controls",
+        "file": "testimonial/card-stack.ts"
+      },
+      "carousel-with-image-carousel": {
+        "label": "Carousel with Image Carousel",
+        "description": "Testimonial carousel with avatar picker",
+        "file": "testimonial/carousel-with-image-carousel.ts"
+      },
+      "carousel-with-rating": {
+        "label": "Carousel with Rating",
+        "description": "Rating carousel with spotlight and avatars",
+        "file": "testimonial/carousel-with-rating.ts"
+      },
+      "centered-minimal": {
+        "label": "Centered Minimal",
+        "description": "Stacked centered quotes",
+        "file": "testimonial/centered-minimal.ts"
+      },
+      "centered-three-by-two-grid": {
+        "label": "Centered Three-by-Two Grid",
+        "description": "Three-column centered cards grid",
+        "file": "testimonial/centered-three-by-two-grid.ts"
+      },
+      "carousel-with-line-effect": {
+        "label": "Carousel with Line Effect",
+        "description": "Line-effect carousel with avatars",
+        "file": "testimonial/carousel-with-line-effect.ts"
+      },
+      "centered-with-logo": {
+        "label": "Centered with Logo",
+        "description": "Centered quote with logo and avatar",
+        "file": "testimonial/centered-with-logo.ts"
+      },
+      "centered-with-slide": {
+        "label": "Centered with Slide",
+        "description": "Carousel-centered testimonial",
+        "file": "testimonial/centered-with-slide.ts"
+      },
+      "fading-bento": {
+        "label": "Fading Bento",
+        "description": "Tall scrollable grid with fade-out CTA",
+        "file": "testimonial/fading-bento.ts"
+      },
+      "horizontally-scrolling": {
+        "label": "Horizontally Scrolling",
+        "description": "Two-row horizontally scrolling testimonials",
+        "file": "testimonial/horizontally-scrolling.ts"
+      },
+      "off-screen-carousel": {
+        "label": "Off Screen Carousel",
+        "description": "Off-screen looping testimonial carousel",
+        "file": "testimonial/off-screen-carousel.ts"
+      },
+      "one-by-three-grid-with-offset-images": {
+        "label": "One by Three Grid with Offset Images",
+        "description": "Split layout with stacked testimonial cards",
+        "file": "testimonial/one-by-three-grid-with-offset-images.ts"
+      },
+      "side-by-side": {
+        "label": "Side by Side",
+        "description": "Split narrative with glass testimonial",
+        "file": "testimonial/side-by-side.ts"
+      },
+      "single-quote": {
+        "label": "Single Quote",
+        "description": "Single highlighted quote with avatar",
+        "file": "testimonial/single-quote.ts"
+      },
+      "three-by-one-grid-with-offset-images": {
+        "label": "Three by One Grid with Offset Images",
+        "description": "Three offset cards with centered avatars",
+        "file": "testimonial/three-by-one-grid-with-offset-images.ts"
+      },
+      "vertical-navigation": {
+        "label": "Vertical Navigation",
+        "description": "Vertical picker with detailed quote",
+        "file": "testimonial/vertical-navigation.ts"
+      },
+      "vertically-scrolling": {
+        "label": "Vertically Scrolling",
+        "description": "Tall scrollable grid with fade masks",
+        "file": "testimonial/vertically-scrolling.ts"
       }
     }
   }

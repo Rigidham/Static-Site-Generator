@@ -1,7 +1,7 @@
 # Static Website Build Standard
 
 **Status:** Active / Canonical  
-**Last updated:** 2025-12-16
+**Last updated:** 2025-12-18
 
 This document defines the complete, authoritative standard for building client-facing static websites under the Websites project. It is designed for repeatable quality, fast delivery, and clean handoff between humans, AI tools (Codex), and repos.
 
@@ -80,6 +80,8 @@ Optional flags (canonical):
 - Optional:
   - `--style-url "https://example.com"`
   - `--firebase`
+  - `--ui-components "global:footer=simple-columns;home:hero=split,cta=primary"`
+    - Scope templates globally or per page; selections must map to keys inside `templates/ui-components/manifest.json`
 
 ### 3.2 Canonical directory rules (hard rule)
 - **Do not create anything in `src/app/app/**`**
@@ -93,6 +95,17 @@ Optional flags (canonical):
 - Brand / company name in header is the only link to `/`
 - **Do not show a “Home” link** in the nav list  
 - Nav should contain only non-home pages
+
+### 3.4 UI template library (canonical)
+- Template source of truth lives at `templates/ui-components/**` with metadata in `templates/ui-components/manifest.json` (16 families / 180 variants as of Dec 2025).
+- Each variant keeps `__SELECTOR__` and `__CLASS_NAME__` placeholders so the injector can rewrite them per scope.
+- Bootstrap serializes the user’s choices to `scripts/ui-template-selection.json` and copies `scripts/inject-ui-templates.mjs` into every generated project (alongside the customer-specific copy).
+- Always point `UI_TEMPLATE_LIBRARY_ROOT` at the template root before running `node scripts/inject-ui-templates.mjs`; rerun the injector any time you edit either the templates or the generated components so the sources stay in sync.
+- Adding or modifying a template requires:
+  1. Dropping the file under `templates/ui-components/<component>/<variant>.ts`
+  2. Updating the manifest entry (label, description, file path)
+  3. Updating the README + this checklist so the catalog remains documented
+- Do not ship unregistered templates; the manifest is authoritative.
 
 ---
 
@@ -277,6 +290,7 @@ Every site must ship with:
 - [ ] No files exist under `src/app/app/**`
 - [ ] `public/` contains built output after build:static
 - [ ] Routes all work (direct navigation + refresh)
+- [ ] `node scripts/inject-ui-templates.mjs` (with `UI_TEMPLATE_LIBRARY_ROOT` set) completes without warnings and re-applies the selected templates
 
 ---
 
