@@ -80,8 +80,14 @@ Optional flags (canonical):
 - Optional:
   - `--style-url "https://example.com"`
   - `--firebase`
+  - `--preset "name"` / `--list-presets`
+    - Presets live in `presets/presets.json`. They expand into the same flags listed above, and any CLI flag supplied explicitly must override the preset value.
+    - The canonical `factory-test-5p` preset must match the documented long-form prompt (`./bootstrap.zsh factory-test-5p --preset "factory-test-5p"`).
+  - `--write-preset "name"` / `--force`
+    - Serializes the fully resolved configuration (after presets + overrides) back into `presets/presets.json` and exits without scaffolding. Use `--force` to overwrite an existing entry.
   - `--ui-components "global:footer=simple-columns;home:hero=split,cta=primary"`
-    - Scope templates globally or per page; selections must map to keys inside `templates/ui-components/manifest.json`
+    - Scope templates globally or per page; selections must map to keys inside `templates/ui-components/manifest.json`.
+    - The canonical registry at `scripts/ui-variants.registry.json` must be regenerated (via `node scripts/generate-ui-variants-registry.mjs`) whenever the template library changes. `bootstrap.zsh` refuses to run if `--ui-components` references a component/variant outside that registry and provides “did you mean … ?” suggestions to fix typos immediately.
   - Color overrides for PrimeNG styled mode:
     - `--color-primary "#39FF14"` (default)
     - `--color-secondary "#FF3CAC"` (default)
@@ -113,7 +119,8 @@ Optional flags (canonical):
   2. Updating the manifest entry (label, description, file path)
   3. Updating the README + this checklist so the catalog remains documented
 - Do not ship unregistered templates; the manifest is authoritative.
-- If template selections exist but `UI_TEMPLATE_LIBRARY_ROOT` or `manifest.json` is missing, the injector must exit non-zero (no silent skips). Every run also emits a summary of skipped components/variants so issues can be corrected immediately.
+- The UI variant registry (`scripts/ui-variants.registry.json`) is generated from the manifest (`node scripts/generate-ui-variants-registry.mjs`) and is the source of truth for bootstrap validation. Keep it in sync with any template edits.
+- If template selections exist but `UI_TEMPLATE_LIBRARY_ROOT` or `manifest.json` is missing, the injector must exit non-zero (no silent skips). The injector must also fail if a selection cannot be applied (unknown component/variant or missing target file) and emit a summary of skipped components/variants so issues can be corrected immediately.
 
 ---
 
@@ -311,6 +318,7 @@ Every site must ship with:
 - [ ] `public/` contains built output after build:static
 - [ ] Routes all work (direct navigation + refresh)
 - [ ] `node scripts/inject-ui-templates.mjs` (with `UI_TEMPLATE_LIBRARY_ROOT` set) completes without warnings and re-applies the selected templates
+- [ ] `node scripts/generate-ui-variants-registry.mjs` has been run after any template library change (commit the updated `scripts/ui-variants.registry.json`)
 - [ ] Each page’s SeoService (`src/app/pages/<slug>/<slug>-seo.service.ts`) sets the final title + meta description
 
 ---

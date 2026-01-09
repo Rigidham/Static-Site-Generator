@@ -42,8 +42,13 @@ This repo contains the automation we use to scaffold Angular-based marketing sit
 - `--globals-per-page`: Map of page→global components determining where each global renders.
 - `--style-url`: External inspiration link stored in docs for Codex context.
 - `--firebase`: Adds Firebase Hosting config plus `npm run build:static`/`deploy` scripts.
+- `--preset "<name>"`: Loads a saved configuration from `presets/presets.json`. Preset values populate the same internal flags that the CLI sets, and any flag provided explicitly on the CLI always overrides the preset.
+- `--write-preset "<name>"`: Serializes the fully resolved configuration (after presets + overrides) back into `presets/presets.json` and exits. Use `--force` to overwrite an existing entry.
+- `--force`: Currently only used with `--write-preset`; allows overwriting an existing preset entry without prompting.
+- `--list-presets`: Prints all preset names and exits immediately (no app scaffolding).
 - `--ui-components`: Select templates from `templates/ui-components`, either globally or per page scope (e.g., `"home:hero=split"`).
   - If template selections are provided but `UI_TEMPLATE_LIBRARY_ROOT` or the manifest is missing, the injector exits non-zero so template application can never silently fail.
+  - Component/variant pairs are validated against the canonical registry (`scripts/ui-variants.registry.json`). Run `node scripts/generate-ui-variants-registry.mjs` after editing the template library to regenerate the registry, and expect the bootstrapper to fail-fast (with suggestions) if an invalid slug is supplied.
 - `--color-primary`, `--color-secondary`, `--color-background`: Accept `#RGB`/`#RRGGBB` hex values (defaults: `#39FF14`, `#FF3CAC`, `#0B0B0B`). The bootstrapper always writes `src/styles/primeng-tokens.css` with a full Prime-style scale (`--p-primary-50` … `--p-primary-950`, surface/hover/border tokens, etc.) derived from those values, ensures the stylesheet loads right after `src/prime-theme.css` in `angular.json`, and injects the same palette (including surface tokens) into `providePrimeNG({ theme: { preset: … } })` so styled-mode + semantic presets stay in sync.
 - `--color-mode`: `light` (default) or `dark`. Controls the `color-scheme` assigned to `:root`/`:host` in `primeng-tokens.css`, so user agents and PrimeNG know whether to treat the palette as light or dark.
 
@@ -314,5 +319,42 @@ node scripts/inject-ui-templates.mjs
 ```
 
 The injector swaps the placeholders in the target Angular components, so you can safely re-run it after editing either the templates or the generated files.
+
+### UI Variant registry
+
+- Generate `scripts/ui-variants.registry.json` via `node scripts/generate-ui-variants-registry.mjs` whenever the template library changes (the script reads `UI_TEMPLATE_LIBRARY_ROOT` or defaults to `templates/ui-components`).
+- `bootstrap.zsh` refuses to continue if `--ui-components` references a component/variant pair not declared in the registry and lists “did you mean … ?” suggestions to fix typos immediately.
+- `scripts/inject-ui-templates.mjs` also exits non-zero if it encounters an invalid selection or missing target component, so template injection can never degrade silently inside a generated project.
+
+### Bootstrap presets
+
+- Presets live in `presets/presets.json`. Each key matches a preset name (e.g., `factory-test-5p`) and stores the exact string values you would normally pass via CLI flags (`pages`, `components`, `global-components-bottom`, `ui-components`, `seo-base-url`, color flags, etc.).
+- Use `./bootstrap.zsh --list-presets` to view what’s available, and run `./bootstrap.zsh <app-name> --preset "<name>"` to scaffold from that profile. For example:
+
+```bash
+./bootstrap.zsh factory-test-5p --preset "factory-test-5p"
+```
+
+- Explicit CLI flags always win, so you can layer overrides (`--color-primary "#2563eb"`, swapping `--ui-components`, etc.) on top of a preset without editing the JSON file.
+- Capture new or updated presets straight from a working prompt with `--write-preset "<name>"` (optionally `--force` to overwrite). The command resolves the final configuration (after preset + overrides), writes it to `presets/presets.json`, prints a confirmation, and exits cleanly without scaffolding.
+- Example (creates/updates `factory-test-5p-copy`):
+
+```bash
+./bootstrap.zsh factory-test-5p \
+  --preset "factory-test-5p" \
+  --color-primary "#2563eb" \
+  --write-preset "factory-test-5p-copy"
+```
+
+- Keep `presets/presets.json` committed alongside the rest of the tooling; update it whenever we need a new canonical profile or tweak an existing one.
+
+### Preset Library v1
+
+- **Local Business Light** – Airy palette with approachable hero, icon grid, and gradient CTA sections tailored for neighborhood services.  
+  `./bootstrap.zsh local-biz-site --preset "local-business-light"`
+- **SaaS Dark** – High-contrast Aurora theme with cinematic hero, animated feature slider, and glassmorphic FAQs for modern SaaS landers.  
+  `./bootstrap.zsh saas-demo --preset "saas-dark"`
+- **Portfolio Minimal** – Calm, typography-first layout with centered hero, minimal stats, and simple CTA/contact blocks for creative studios.  
+  `./bootstrap.zsh folio-starter --preset "portfolio-minimal"`
 
 See `docs/README.md` for deeper documentation and template authoring details.

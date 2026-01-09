@@ -1,0 +1,46 @@
+{
+  "factory-test-5p": {
+    "pages": "about,services,work,contact",
+    "components": "home:Hero,Feature,CTA;about:Hero,Stats,Team;services:Hero,Pricing,FAQ;work:Hero,Content,Testimonial;contact:Hero,Contact Us,Content",
+    "global-components-bottom": "footer",
+    "globals-per-page": "home:footer;about:footer;services:footer;work:footer;contact:footer",
+    "ui-components": "global:footer=three-columns;home:hero=split;home:feature=icons-grid;home:cta=primary;about:hero=light-image-background;about:stats=three-column;about:team=two-by-two-grid-with-bio-and-icons;services:hero=dark-with-illustration;services:pricing=three-tiers;services:faq=accordion;work:hero=with-phone;work:content=two-columns-with-image;work:testimonial=card-stack;contact:hero=dark-image-background;contact:contact-us=two-columns-with-image;contact:content=simple-centered",
+    "seo-base-url": "https://example.com",
+    "color-primary": "#39FF14",
+    "color-secondary": "#FF3CAC",
+    "color-background": "#0B0B0B"
+  },
+  "local-business-light": {
+    "pages": "about,services,work,contact",
+    "components": "home:Hero,Feature,CTA;about:Hero,Stats,Team;services:Hero,Pricing,FAQ;work:Hero,Content,Testimonial;contact:Hero,Contact Us,Content",
+    "global-components-bottom": "footer",
+    "globals-per-page": "home:footer;about:footer;services:footer;work:footer;contact:footer",
+    "ui-components": "global:footer=three-columns;home:hero=split;home:feature=three-by-one-with-colored-icons;home:cta=gradient-background;about:hero=right-aligned-image;about:stats=three-column;about:team=two-by-two-grid-with-bio-and-icons;services:hero=with-three-d-emoji;services:pricing=three-tiers;services:faq=accordion;work:hero=with-phone;work:content=two-columns-with-image;work:testimonial=card-stack;contact:hero=light-image-background;contact:contact-us=two-columns-with-image;contact:content=simple-centered",
+    "seo-base-url": "https://example.com",
+    "color-primary": "#2563EB",
+    "color-secondary": "#F97316",
+    "color-background": "#F8FAFC"
+  },
+  "portfolio-minimal": {
+    "pages": "about,services,work,contact",
+    "components": "home:Hero,Feature,CTA;about:Hero,Stats,Team;services:Hero,Pricing,FAQ;work:Hero,Content,Testimonial;contact:Hero,Contact Us,Content",
+    "global-components-bottom": "footer",
+    "globals-per-page": "home:footer;about:footer;services:footer;work:footer;contact:footer",
+    "ui-components": "global:footer=simple-floating;home:hero=centered-product-image;home:feature=centered-two-by-two-simple-grid;home:cta=simple-centered;about:hero=light-image-background;about:stats=minimal-two-by-two-grid;about:team=grid;services:hero=right-aligned-image;services:pricing=single-tier-with-features;services:faq=three-columns;work:hero=with-phone;work:content=simple-centered;work:testimonial=centered-with-logo;contact:hero=light-image-background;contact:contact-us=centered-with-badge;contact:content=simple-centered",
+    "seo-base-url": "https://example.com",
+    "color-primary": "#111827",
+    "color-secondary": "#475569",
+    "color-background": "#F4F4F5"
+  },
+  "saas-dark": {
+    "pages": "about,services,work,contact",
+    "components": "home:Hero,Feature,CTA;about:Hero,Stats,Team;services:Hero,Pricing,FAQ;work:Hero,Content,Testimonial;contact:Hero,Contact Us,Content",
+    "global-components-bottom": "footer",
+    "globals-per-page": "home:footer;about:footer;services:footer;work:footer;contact:footer",
+    "ui-components": "global:footer=dark-background;home:hero=dark-with-illustration;home:feature=sliding-screenshots;home:cta=gradient-background-with-effects;about:hero=centered-product-image;about:stats=colored-four-by-one-grid;about:team=with-glass-overlay;services:hero=form-and-video-aligned-image;services:pricing=three-floating-card-tiers;services:faq=glassmorphic-accordion;work:hero=dark-image-background;work:content=centered;work:testimonial=carousel-with-line-effect;contact:hero=dark-image-background;contact:contact-us=floating-card-on-cover;contact:content=centered",
+    "seo-base-url": "https://example.com",
+    "color-primary": "#8B5CF6",
+    "color-secondary": "#22D3EE",
+    "color-background": "#020617"
+  }
+}

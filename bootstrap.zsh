@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 TEMPLATE_LIBRARY_ROOT="${SCRIPT_ROOT}/templates/ui-components"
 CUSTOMERS_DIR="${SCRIPT_ROOT}/customers"
+PRESETS_FILE="${SCRIPT_ROOT}/presets/presets.json"
+RESOLVED_SEO_BASE_URL=""
 
 # ----------------------------
 # Usage
@@ -11,7 +13,7 @@ CUSTOMERS_DIR="${SCRIPT_ROOT}/customers"
 usage() {
   cat <<'TXT'
 Usage:
-  bootstrap.zsh <app-name> [--pages "about,services"] [--components "home:hero;about:hero"] [--global-components "footer,chat-box"] [--global-components-top "promo-banner"] [--global-components-before-outlet "breadcrumbs"] [--global-components-after-outlet "chat-box"] [--global-components-bottom "footer"] [--seo-base-url "https://example.com"] [--style-url "https://example.com"] [--color-primary "#39FF14"] [--color-secondary "#FF3CAC"] [--color-background "#0B0B0B"] [--firebase]
+  bootstrap.zsh <app-name> [--preset "name"] [--write-preset "name"] [--force] [--pages "about,services"] [--components "home:hero;about:hero"] [--global-components "footer,chat-box"] [--global-components-top "promo-banner"] [--global-components-before-outlet "breadcrumbs"] [--global-components-after-outlet "chat-box"] [--global-components-bottom "footer"] [--seo-base-url "https://example.com"] [--style-url "https://example.com"] [--color-primary "#39FF14"] [--color-secondary "#FF3CAC"] [--color-background "#0B0B0B"] [--firebase]
 
 Examples:
   ./bootstrap.zsh acme-plumbing
@@ -26,6 +28,9 @@ Notes:
   - Pages can be ANY labels you type (spaces/caps/punctuation ok). They are auto-converted to URL slugs.
   - Use --seo-base-url to set sitemap/robots + default metadata base URL (defaults to https://example.com).
   - If --pages is omitted, you'll be prompted (press Enter for default: About,Services,Gallery,Contact)
+  - Use --preset "<name>" to prefill flags from presets/presets.json (explicit CLI flags still override).
+  - Run ./bootstrap.zsh --list-presets to view available presets and exit.
+  - Use --write-preset "<name>" to serialize the resolved configuration back into presets/presets.json (add --force to overwrite).
 TXT
 }
 
@@ -58,9 +63,283 @@ normalize_hex_color_or_die() {
   print -r -- "#${digits}"
 }
 
+list_presets_and_exit() {
+  command -v node >/dev/null || { echo "node is required"; exit 1; }
+  if [[ ! -f "$PRESETS_FILE" ]]; then
+    echo "No presets defined (missing $PRESETS_FILE)."
+    exit 1
+  fi
+  PRESETS_FILE="$PRESETS_FILE" node - <<'NODE'
+const fs = require('fs');
+const file = process.env.PRESETS_FILE;
+try {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const names = Object.keys(data || {});
+  if (!names.length) {
+    console.log('No presets available.');
+    process.exit(0);
+  }
+  console.log('Available presets:');
+  for (const name of names) {
+    console.log(` - ${name}`);
+  }
+} catch (err) {
+  console.error(`[presets] ERROR: ${err.message}`);
+  process.exit(1);
+}
+NODE
+  exit 0
+}
+
+apply_preset_values() {
+  local preset_name="$1"
+  [[ -n "$preset_name" ]] || return
+  [[ -f "$PRESETS_FILE" ]] || die "Preset file not found at ${PRESETS_FILE}."
+  local kv_output=""
+  kv_output="$(
+    PRESETS_FILE="$PRESETS_FILE" PRESET_NAME="$preset_name" node - <<'NODE'
+const fs = require('fs');
+const file = process.env.PRESETS_FILE;
+const presetName = (process.env.PRESET_NAME || '').trim();
+if (!presetName) {
+  console.error('[presets] ERROR: Missing preset name.');
+  process.exit(1);
+}
+let data;
+try {
+  data = JSON.parse(fs.readFileSync(file, 'utf8'));
+} catch (err) {
+  console.error(`[presets] ERROR: Unable to read ${file}: ${err.message}`);
+  process.exit(1);
+}
+if (!data || typeof data !== 'object') {
+  console.error('[presets] ERROR: Presets file must export an object.');
+  process.exit(1);
+}
+const preset = data[presetName];
+if (!preset || typeof preset !== 'object') {
+  const names = Object.keys(data || {});
+  console.error(`[presets] ERROR: Preset '${presetName}' not found.`);
+  if (names.length) {
+    console.error(`Available presets: ${names.join(', ')}`);
+  }
+  process.exit(1);
+}
+for (const [key, val] of Object.entries(preset)) {
+  if (val === undefined || val === null) continue;
+  const valueString = typeof val === 'object' ? JSON.stringify(val) : String(val);
+  console.log(`${key}\t${valueString}`);
+}
+NODE
+  )" || exit 1
+
+  while IFS=$'\t' read -r key value; do
+    [[ -z "$key" ]] && continue
+    local lower="${(L)key}"
+    case "$lower" in
+      pages)
+        [[ -n "${FLAG_EXPLICIT[pages]:-}" ]] || PAGES_CSV="$value"
+        ;;
+      components)
+        [[ -n "${FLAG_EXPLICIT[components]:-}" ]] || COMPONENTS_MAP="$value"
+        ;;
+      global-components)
+        [[ -n "${FLAG_EXPLICIT[global-components]:-}" ]] || GLOBAL_COMPONENTS_CSV="$value"
+        ;;
+      global-components-top)
+        [[ -n "${FLAG_EXPLICIT[global-components-top]:-}" ]] || GLOBAL_COMPONENTS_TOP_CSV="$value"
+        ;;
+      global-components-before-outlet)
+        [[ -n "${FLAG_EXPLICIT[global-components-before-outlet]:-}" ]] || GLOBAL_COMPONENTS_BEFORE_OUTLET_CSV="$value"
+        ;;
+      global-components-after-outlet)
+        [[ -n "${FLAG_EXPLICIT[global-components-after-outlet]:-}" ]] || GLOBAL_COMPONENTS_AFTER_OUTLET_CSV="$value"
+        ;;
+      global-components-bottom)
+        [[ -n "${FLAG_EXPLICIT[global-components-bottom]:-}" ]] || GLOBAL_COMPONENTS_BOTTOM_CSV="$value"
+        ;;
+      globals-per-page)
+        [[ -n "${FLAG_EXPLICIT[globals-per-page]:-}" ]] || GLOBALS_PER_PAGE_MAP="$value"
+        ;;
+      style-url)
+        [[ -n "${FLAG_EXPLICIT[style-url]:-}" ]] || STYLE_URL="$value"
+        ;;
+      seo-base-url)
+        [[ -n "${FLAG_EXPLICIT[seo-base-url]:-}" ]] || SEO_BASE_URL_FLAG="$value"
+        ;;
+      ui-components)
+        [[ -n "${FLAG_EXPLICIT[ui-components]:-}" ]] || UI_COMPONENTS_SPEC="$value"
+        ;;
+      color-primary)
+        [[ -n "${FLAG_EXPLICIT[color-primary]:-}" ]] || COLOR_PRIMARY="$value"
+        ;;
+      color-secondary)
+        [[ -n "${FLAG_EXPLICIT[color-secondary]:-}" ]] || COLOR_SECONDARY="$value"
+        ;;
+      color-background)
+        [[ -n "${FLAG_EXPLICIT[color-background]:-}" ]] || COLOR_BACKGROUND="$value"
+        ;;
+      color-mode)
+        [[ -n "${FLAG_EXPLICIT[color-mode]:-}" ]] || COLOR_MODE="$value"
+        ;;
+      firebase)
+        if [[ -z "${FLAG_EXPLICIT[firebase]:-}" ]]; then
+          if [[ "$value" == "true" || "$value" == "1" || "$value" == "yes" ]]; then
+            WITH_FIREBASE="--firebase"
+          else
+            WITH_FIREBASE=""
+          fi
+        fi
+        ;;
+    esac
+  done <<< "$kv_output"
+}
+
+write_preset_and_exit() {
+  local preset_name="${WRITE_PRESET_NAME:-}"
+  [[ -n "$preset_name" ]] || die "--write-preset requires a preset name."
+
+  typeset -a pages_out=("${PAGE_SLUGS[@]}")
+  local pages_spec="${(j:,:)pages_out}"
+  [[ -n "$pages_spec" ]] || die "Cannot write preset '${preset_name}': no pages were resolved."
+
+  typeset -a component_entries=()
+  typeset -a component_pages=("home" "${PAGE_SLUGS[@]}")
+  for page in "${component_pages[@]}"; do
+    local csv="${PAGE_LOCAL_COMPONENTS_CSV[$page]:-}"
+    csv="${csv//[[:space:]]/}"
+    [[ -z "$csv" ]] && continue
+    component_entries+=("${page}:${csv}")
+  done
+  local components_spec="${(j:;:)component_entries}"
+
+  typeset -a globals_entries=()
+  typeset -a globals_pages=("${ALL_PAGES[@]}")
+  if (( ${#globals_pages[@]} == 0 )); then
+    globals_pages=("home" "${PAGE_SLUGS[@]}")
+  fi
+  for page in "${globals_pages[@]}"; do
+    local csv="${PAGE_GLOBALS_CSV[$page]:-}"
+    csv="${csv//[[:space:]]/}"
+    [[ -z "$csv" ]] && continue
+    globals_entries+=("${page}:${csv}")
+  done
+  local globals_spec="${(j:;:)globals_entries}"
+
+  typeset -a bottom_unique=()
+  typeset -A seen_bottom=()
+  for g in "${GLOBAL_BOTTOM_SLUGS[@]}"; do
+    [[ -z "$g" ]] && continue
+    if [[ -z "${seen_bottom[$g]:-}" ]]; then
+      bottom_unique+=("$g")
+      seen_bottom[$g]=1
+    fi
+  done
+  local global_bottom_spec="${(j:,:)bottom_unique}"
+
+  typeset -a ui_entries=()
+  typeset -a selection_keys=(${(ok)UI_TEMPLATE_SELECTION_MAP})
+  for map_key in "${selection_keys[@]}"; do
+    local variant="${UI_TEMPLATE_SELECTION_MAP[$map_key]}"
+    [[ -z "$variant" ]] && continue
+    local scope="${map_key%%|*}"
+    local component="${map_key#*|}"
+    [[ -z "$component" ]] && continue
+    ui_entries+=("${scope}:${component}=${variant}")
+  done
+  local ui_spec="${(j:;:)ui_entries}"
+
+  local seo_value="${RESOLVED_SEO_BASE_URL:-}"
+  [[ -n "$seo_value" ]] || die "Cannot write preset '${preset_name}': SEO base URL unresolved."
+
+  local color_primary="${COLOR_PRIMARY:-}"
+  local color_secondary="${COLOR_SECONDARY:-}"
+  local color_background="${COLOR_BACKGROUND:-}"
+  [[ -n "$color_primary" ]] || die "Cannot write preset '${preset_name}': color-primary missing."
+  [[ -n "$color_secondary" ]] || die "Cannot write preset '${preset_name}': color-secondary missing."
+  [[ -n "$color_background" ]] || die "Cannot write preset '${preset_name}': color-background missing."
+
+  PRESET_OUTPUT_FILE="$PRESETS_FILE" \
+  PRESET_NAME_TARGET="$preset_name" \
+  PRESET_FORCE="${FORCE_WRITE_PRESET:-}" \
+  PRESET_PAGES="$pages_spec" \
+  PRESET_COMPONENTS="$components_spec" \
+  PRESET_GLOBAL_BOTTOM="$global_bottom_spec" \
+  PRESET_GLOBALS_PER_PAGE="$globals_spec" \
+  PRESET_UI_COMPONENTS="$ui_spec" \
+  PRESET_SEO_BASE_URL="$seo_value" \
+  PRESET_COLOR_PRIMARY="$color_primary" \
+  PRESET_COLOR_SECONDARY="$color_secondary" \
+  PRESET_COLOR_BACKGROUND="$color_background" \
+  node - <<'NODE' || exit 1
+const fs = require('fs');
+const path = require('path');
+
+const file = process.env.PRESET_OUTPUT_FILE;
+const presetName = (process.env.PRESET_NAME_TARGET || '').trim();
+const force = process.env.PRESET_FORCE === '1';
+
+const required = {
+  pages: process.env.PRESET_PAGES ?? '',
+  components: process.env.PRESET_COMPONENTS ?? '',
+  'global-components-bottom': process.env.PRESET_GLOBAL_BOTTOM ?? '',
+  'globals-per-page': process.env.PRESET_GLOBALS_PER_PAGE ?? '',
+  'ui-components': process.env.PRESET_UI_COMPONENTS ?? '',
+  'seo-base-url': process.env.PRESET_SEO_BASE_URL ?? '',
+  'color-primary': process.env.PRESET_COLOR_PRIMARY ?? '',
+  'color-secondary': process.env.PRESET_COLOR_SECONDARY ?? '',
+  'color-background': process.env.PRESET_COLOR_BACKGROUND ?? '',
+};
+
+if (!presetName) {
+  console.error('[presets] ERROR: Missing preset name.');
+  process.exit(1);
+}
+
+for (const [key, value] of Object.entries(required)) {
+  if (typeof value !== 'string') {
+    console.error(`[presets] ERROR: Missing value for ${key}.`);
+    process.exit(1);
+  }
+}
+
+let data = {};
+if (file && fs.existsSync(file)) {
+  try {
+    data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (err) {
+    console.error(`[presets] ERROR: Unable to parse ${file}: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+if (!force && data[presetName]) {
+  console.error(`[presets] ERROR: Preset '${presetName}' already exists. Re-run with --force to overwrite.`);
+  process.exit(1);
+}
+
+data[presetName] = required;
+const sorted = {};
+for (const key of Object.keys(data).sort()) {
+  sorted[key] = data[key];
+}
+
+const dir = path.dirname(file);
+fs.mkdirSync(dir, { recursive: true });
+fs.writeFileSync(file, JSON.stringify(sorted, null, 2) + '\n');
+console.log(`[presets] Saved preset '${presetName}' to ${file}.`);
+NODE
+
+  exit 0
+}
+
 if [[ $# -lt 1 ]]; then
   usage
   exit 1
+fi
+
+if [[ "$1" == "--list-presets" ]]; then
+  list_presets_and_exit
 fi
 
 APP_NAME="$1"
@@ -70,6 +349,9 @@ STYLE_URL=""
 WITH_FIREBASE=""
 PAGES_CSV=""
 UI_COMPONENTS_SPEC=""
+PRESET_NAME=""
+WRITE_PRESET_NAME=""
+FORCE_WRITE_PRESET=""
 SEO_BASE_URL_FLAG=""
 DEFAULT_COLOR_PRIMARY="#39FF14"
 DEFAULT_COLOR_SECONDARY="#FF3CAC"
@@ -78,112 +360,138 @@ COLOR_PRIMARY="$DEFAULT_COLOR_PRIMARY"
 COLOR_SECONDARY="$DEFAULT_COLOR_SECONDARY"
 COLOR_BACKGROUND="$DEFAULT_COLOR_BACKGROUND"
 COLOR_MODE="light"
+typeset -A FLAG_EXPLICIT=()
 
 # Parse flags (order independent)
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --preset)
+      shift || true
+      [[ $# -eq 0 ]] && die "--preset requires a value"
+      PRESET_NAME="$1"
+      shift
+      ;;
+    --list-presets)
+      list_presets_and_exit
+      ;;
+    --write-preset)
+      shift || true
+      [[ $# -eq 0 ]] && die "--write-preset requires a value"
+      WRITE_PRESET_NAME="$1"
+      shift
+      ;;
+    --force)
+      FORCE_WRITE_PRESET="1"
+      shift
+      ;;
     --pages)
       shift || true
       [[ $# -eq 0 ]] && die "--pages requires a value"
       PAGES_CSV="$1"
+      FLAG_EXPLICIT[pages]=1
       shift
       ;;
     --global-components-top|--globals-top)
       shift || true
       [[ $# -eq 0 ]] && die "--global-components-top requires a value"
       GLOBAL_COMPONENTS_TOP_CSV="$1"
+      FLAG_EXPLICIT[global-components-top]=1
       shift
       ;;
     --global-components-bottom|--globals-bottom)
       shift || true
       [[ $# -eq 0 ]] && die "--global-components-bottom requires a value"
       GLOBAL_COMPONENTS_BOTTOM_CSV="$1"
+      FLAG_EXPLICIT[global-components-bottom]=1
       shift
       ;;
     --global-components-before-outlet|--globals-before-outlet)
       shift || true
       [[ $# -eq 0 ]] && die "--global-components-before-outlet requires a value"
       GLOBAL_COMPONENTS_BEFORE_OUTLET_CSV="$1"
+      FLAG_EXPLICIT[global-components-before-outlet]=1
+      shift
+      ;;
+    --global-components-after-outlet|--globals-after-outlet)
+      shift || true
+      [[ $# -eq 0 ]] && die "--global-components-after-outlet requires a value"
+      GLOBAL_COMPONENTS_AFTER_OUTLET_CSV="$1"
+      FLAG_EXPLICIT[global-components-after-outlet]=1
       shift
       ;;
     --globals-per-page)
       shift || true
       [[ $# -eq 0 ]] && die "--globals-per-page requires a value"
       GLOBALS_PER_PAGE_MAP="$1"
+      FLAG_EXPLICIT[globals-per-page]=1
       shift
       ;;
-
-    --global-components-after-outlet|--globals-after-outlet)
-      shift || true
-      [[ $# -eq 0 ]] && die "--global-components-after-outlet requires a value"
-      GLOBAL_COMPONENTS_AFTER_OUTLET_CSV="$1"
-      shift
-      ;;
-
     --global-components|--globals)
       shift || true
       [[ $# -eq 0 ]] && die "--global-components requires a value"
       GLOBAL_COMPONENTS_CSV="$1"
+      FLAG_EXPLICIT[global-components]=1
       shift
       ;;
-
     --ui-components)
       shift || true
       [[ $# -eq 0 ]] && die "--ui-components requires a value"
       UI_COMPONENTS_SPEC="$1"
+      FLAG_EXPLICIT[ui-components]=1
       shift
       ;;
-
     --seo-base-url)
       shift || true
       [[ $# -eq 0 ]] && die "--seo-base-url requires a value"
       SEO_BASE_URL_FLAG="$1"
+      FLAG_EXPLICIT[seo-base-url]=1
       shift
       ;;
-
     --components|--page-components)
       shift || true
       [[ $# -eq 0 ]] && die "--components requires a value"
       COMPONENTS_MAP="$1"
+      FLAG_EXPLICIT[components]=1
       shift
       ;;
-
     --style-url)
-      shift
-      if [[ $# -eq 0 ]]; then
-        echo "ERROR: --style-url requires a value"
-        usage
-        exit 1
-      fi
+      shift || true
+      [[ $# -eq 0 ]] && die "--style-url requires a value"
       STYLE_URL="$1"
+      FLAG_EXPLICIT[style-url]=1
       shift
       ;;
     --color-primary)
       shift || true
       [[ $# -eq 0 ]] && die "--color-primary requires a value"
       COLOR_PRIMARY="$1"
+      FLAG_EXPLICIT[color-primary]=1
       shift
       ;;
     --color-secondary)
       shift || true
       [[ $# -eq 0 ]] && die "--color-secondary requires a value"
       COLOR_SECONDARY="$1"
+      FLAG_EXPLICIT[color-secondary]=1
       shift
       ;;
     --color-background)
       shift || true
       [[ $# -eq 0 ]] && die "--color-background requires a value"
       COLOR_BACKGROUND="$1"
+      FLAG_EXPLICIT[color-background]=1
       shift
       ;;
     --color-mode)
       shift || true
       [[ $# -eq 0 ]] && die "--color-mode requires a value"
       COLOR_MODE="$1"
+      FLAG_EXPLICIT[color-mode]=1
       shift
       ;;
     --firebase)
       WITH_FIREBASE="--firebase"
+      FLAG_EXPLICIT[firebase]=1
       shift
       ;;
     -h|--help)
@@ -198,6 +506,10 @@ done
 
 command -v node >/dev/null || { echo "node is required"; exit 1; }
 command -v npm  >/dev/null || { echo "npm is required"; exit 1; }
+
+if [[ -n "${PRESET_NAME:-}" ]]; then
+  apply_preset_values "$PRESET_NAME"
+fi
 
 COLOR_PRIMARY="$(normalize_hex_color_or_die "${COLOR_PRIMARY:-}" "primary")"
 COLOR_SECONDARY="$(normalize_hex_color_or_die "${COLOR_SECONDARY:-}" "secondary")"
@@ -644,6 +956,119 @@ for key variant in "${(@kv)UI_TEMPLATE_SELECTION_MAP}"; do
 done
 export UI_TEMPLATE_SERIALIZED
 
+# Validate template selections against the canonical registry (if any selections exist)
+if [[ -n "${UI_TEMPLATE_SERIALIZED//[[:space:]]/}" ]]; then
+  UI_VARIANTS_REGISTRY_PATH="${SCRIPT_ROOT}/scripts/ui-variants.registry.json"
+  [[ -f "$UI_VARIANTS_REGISTRY_PATH" ]] || die "UI variants registry not found at ${UI_VARIANTS_REGISTRY_PATH}. Run node scripts/generate-ui-variants-registry.mjs."
+  export UI_VARIANTS_REGISTRY_PATH
+  node - <<'NODE'
+const fs = require('fs');
+const path = require('path');
+
+const serialized = process.env.UI_TEMPLATE_SERIALIZED || '';
+const registryPath = process.env.UI_VARIANTS_REGISTRY_PATH;
+
+if (!serialized.trim()) process.exit(0);
+
+if (!registryPath || !fs.existsSync(registryPath)) {
+  console.error(`[ui-variants] ERROR: Registry missing at ${registryPath || '(unset)'}.`);
+  process.exit(1);
+}
+
+let registry;
+try {
+  registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+} catch (err) {
+  console.error(`[ui-variants] ERROR: Unable to parse registry ${registryPath}: ${err.message}`);
+  process.exit(1);
+}
+
+const components = registry?.components || {};
+const componentSlugs = Object.keys(components);
+const errors = [];
+
+const slugify = (value = '') =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
+    .replace(/-+/g, '-');
+
+const levenshtein = (a = '', b = '') => {
+  if (a === b) return 0;
+  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+};
+
+const suggestClosest = (target, pool = []) => {
+  if (!target || !pool.length) return null;
+  const normalizedTarget = target.toLowerCase();
+  let best = { value: null, score: Infinity };
+  for (const candidate of pool) {
+    const score = levenshtein(normalizedTarget, candidate.toLowerCase());
+    if (score < best.score) {
+      best = { value: candidate, score };
+    }
+  }
+  const threshold = Math.max(2, Math.floor(normalizedTarget.length * 0.4));
+  return best.score <= threshold ? best.value : null;
+};
+
+const lines = serialized.split(/\r?\n/).filter(Boolean);
+for (const line of lines) {
+  const [scopeComponent, variantRaw] = line.split('=');
+  if (!scopeComponent || !variantRaw) continue;
+  const [scopeRaw, componentRaw] = scopeComponent.split('|');
+  const scope = slugify(scopeRaw || 'global');
+  const component = slugify(componentRaw || '');
+  const variant = slugify(variantRaw || '');
+
+  if (!component) continue;
+  const componentEntry = components[component];
+  if (!componentEntry) {
+    const suggestion = suggestClosest(component, componentSlugs);
+    const message = suggestion
+      ? `[${scope}] Unknown component '${component}'. Did you mean '${suggestion}'?`
+      : `[${scope}] Unknown component '${component}'.`;
+    errors.push(message);
+    continue;
+  }
+  const variantMap = componentEntry.variants || {};
+  if (!variantMap[variant]) {
+    const variantSlugs = Object.keys(variantMap);
+    const suggestion = suggestClosest(variant, variantSlugs);
+    const details = suggestion
+      ? `Did you mean '${suggestion}'?`
+      : `Available variants: ${variantSlugs.join(', ') || 'none'}.`;
+    errors.push(`[${scope}] Component '${component}' does not provide variant '${variant}'. ${details}`);
+  }
+}
+
+if (errors.length) {
+  console.error('UI template validation failed:');
+  for (const err of errors) {
+    console.error(` - ${err}`);
+  }
+  console.error('Run node scripts/generate-ui-variants-registry.mjs after updating the template library.');
+  process.exit(1);
+}
+NODE
+fi
+
 # De-dupe each position while preserving order
 dedupe_arr() {
   local arr_name="$1"
@@ -789,6 +1214,18 @@ else
   fi
 fi
 
+if [[ -n "${SEO_BASE_URL_FLAG:-}" ]]; then
+  RESOLVED_SEO_BASE_URL="$SEO_BASE_URL_FLAG"
+elif [[ -n "${SEO_BASE_URL:-}" ]]; then
+  RESOLVED_SEO_BASE_URL="$SEO_BASE_URL"
+else
+  RESOLVED_SEO_BASE_URL="https://example.com"
+fi
+
+if [[ -n "${WRITE_PRESET_NAME:-}" ]]; then
+  write_preset_and_exit
+fi
+
 echo "==> Creating Angular app (latest) with SSR + routing: $APP_NAME"
 mkdir -p "$CUSTOMERS_DIR"
 cd "$CUSTOMERS_DIR"
@@ -796,11 +1233,7 @@ npx -y @angular/cli@latest new "$APP_NAME" --ssr --routing --style=css --skip-gi
 cd "$APP_NAME"
 
 export APP_BRAND_TITLE="${APP_NAME}"
-if [[ -n "${SEO_BASE_URL_FLAG:-}" ]]; then
-  SEO_BASE_URL="$SEO_BASE_URL_FLAG"
-elif [[ -z "${SEO_BASE_URL:-}" ]]; then
-  SEO_BASE_URL="https://example.com"
-fi
+SEO_BASE_URL="$RESOLVED_SEO_BASE_URL"
 export SEO_BASE_URL
 export PAGE_SLUGS_LIST="${(j: :)PAGE_SLUGS}"
 

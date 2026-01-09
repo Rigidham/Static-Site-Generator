@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "YOUR_EMAIL_GATEWAY_PROJECT_ID",
+    "email-gateway": "YOUR_EMAIL_GATEWAY_PROJECT_ID",
+    "forfina": "forfina-cf328"
+  }
+}

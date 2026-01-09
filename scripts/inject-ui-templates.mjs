@@ -38,6 +38,7 @@ if (!manifestPath || !fs.existsSync(manifestPath)) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8') || '{}');
+const componentSlugs = Object.keys(manifest || {});
 
 const toPascal = (str = '') =>
   str
@@ -66,6 +67,11 @@ const printSkippedSummary = () => {
 };
 
 if (!applied.length) {
+  if (hasSelections) {
+    log('ERROR: Template injection aborted; no selections could be applied.');
+    printSkippedSummary();
+    process.exit(1);
+  }
   log('No matching template selections found.');
   printSkippedSummary();
   process.exit(0);
@@ -77,6 +83,11 @@ for (const entry of applied) {
 
 printSkippedSummary();
 
+if (hasSelections && skipped.length) {
+  log('ERROR: Template injection completed with errors. See skipped summary above.');
+  process.exit(1);
+}
+
 function applyTemplate(scope, component, variant) {
   const cleanedScope = (scope || '').trim().toLowerCase();
   const cleanedComponent = (component || '').trim().toLowerCase();
@@ -86,17 +97,26 @@ function applyTemplate(scope, component, variant) {
 
   const manifestEntry = manifest[cleanedComponent];
   if (!manifestEntry) {
-    recordSkip(cleanedScope, cleanedComponent, cleanedVariant, `Unknown component '${cleanedComponent}' in template selections.`);
+    const suggestion = suggestClosest(cleanedComponent, componentSlugs);
+    const reason = suggestion
+      ? `Unknown component '${cleanedComponent}' in template selections. Did you mean '${suggestion}'?`
+      : `Unknown component '${cleanedComponent}' in template selections.`;
+    recordSkip(cleanedScope, cleanedComponent, cleanedVariant, reason);
     return;
   }
 
   const variantEntry = manifestEntry.variants?.[cleanedVariant];
   if (!variantEntry) {
+    const variantSlugs = Object.keys(manifestEntry.variants || {});
+    const suggestion = suggestClosest(cleanedVariant, variantSlugs);
+    const variantSummary = suggestion
+      ? `Did you mean '${suggestion}'?`
+      : `Available variants: ${variantSlugs.join(', ') || 'none'}.`;
     recordSkip(
       cleanedScope,
       cleanedComponent,
       cleanedVariant,
-      `Unknown variant '${cleanedVariant}' for component '${cleanedComponent}'.`,
+      `Unknown variant '${cleanedVariant}' for component '${cleanedComponent}'. ${variantSummary}`,
     );
     return;
   }
@@ -121,7 +141,12 @@ function applyTemplate(scope, component, variant) {
 
   const targetPath = path.join(targetDir, fileName);
   if (!fs.existsSync(targetPath)) {
-    recordSkip(cleanedScope, cleanedComponent, cleanedVariant, `Target component ${targetPath} does not exist; run generation first.`);
+    recordSkip(
+      cleanedScope,
+      cleanedComponent,
+      cleanedVariant,
+      `Target component ${targetPath} does not exist; ensure the ${cleanedComponent} component was generated for scope '${cleanedScope}'.`,
+    );
     return;
   }
 
@@ -135,4 +160,36 @@ function applyTemplate(scope, component, variant) {
 function recordSkip(scope, component, variant, reason) {
   skipped.push({ scope, component, variant, reason });
   log(`WARN: ${reason}`);
+}
+
+function levenshtein(a = '', b = '') {
+  if (a === b) return 0;
+  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+}
+
+function suggestClosest(target, pool = []) {
+  if (!target || !pool.length) return null;
+  const normalizedTarget = target.toLowerCase();
+  let best = { value: null, score: Infinity };
+  for (const candidate of pool) {
+    const score = levenshtein(normalizedTarget, candidate.toLowerCase());
+    if (score < best.score) {
+      best = { value: candidate, score };
+    }
+  }
+  const threshold = Math.max(2, Math.floor(normalizedTarget.length * 0.4));
+  return best.score <= threshold ? best.value : null;
 }

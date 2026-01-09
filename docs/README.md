@@ -15,6 +15,26 @@ PrimeNG, TailwindCSS, and Firebase Hosting.
 ./bootstrap.zsh <app-name> [--style-url "https://example.com"] [--firebase]
 ```
 
+## Firebase Functions Layout
+- Project-specific functions live in `customers/<Project>/functions` and are deployed from that project folder.
+- The shared email gateway now lives in `customers/rigidhamlabs/functions` and deploys with the RigidhamLabs project.
+- Firebase configs:
+  - Project-specific: `customers/<Project>/firebase.json` (points to `customers/<Project>/functions`)
+- Project aliases:
+  - Repo root `.firebaserc` includes named project aliases (update `YOUR_EMAIL_GATEWAY_PROJECT_ID` if you keep it).
+  - Each project folder can include its own `.firebaserc` with a `default` alias for that site.
+
+### Deploy Examples
+```bash
+# Shared email gateway (RigidhamLabs)
+cd customers/rigidhamlabs
+firebase deploy --only functions
+
+# Project-specific functions (example)
+cd customers/Forfina
+firebase deploy --only functions
+```
+
 ### UI Template Library
 - Templates live under `templates/ui-components/<component>/<variant>.ts` and are registered in `templates/ui-components/manifest.json`. Add a new variant by copying one of the existing files, keeping the `__SELECTOR__` and `__CLASS_NAME__` placeholders in place, and wiring the file path plus metadata into the manifest entry for that component.
 - You can preselect templates from the CLI via `--ui-components`. Examples:
